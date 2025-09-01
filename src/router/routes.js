@@ -1,16 +1,18 @@
+// src/router/routes.js
+import MainLayout from 'layouts/MainLayout.vue'
+import BusinessPage from 'pages/BusinessPage.vue'
+import MenuPage from 'pages/MenuPage.vue'
+
 const routes = [
   {
     path: '/',
-    component: () => import('layouts/MainLayout.vue'),
-    children: [{ path: '', component: () => import('pages/IndexPage.vue') }],
+    component: MainLayout,
+    children: [
+      { path: ':businessName', name: 'business', component: BusinessPage },
+      { path: ':businessName/Menu', name: 'businessMenu', component: MenuPage }
+    ]
   },
-
-  // Always leave this as last one,
-  // but you can also remove it
-  {
-    path: '/:catchAll(.*)*',
-    component: () => import('pages/ErrorNotFound.vue'),
-  },
+  { path: '/:catchAll(.*)*', component: () => import('pages/ErrorNotFound.vue') }
 ]
 
 export default routes
