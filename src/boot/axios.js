@@ -1,9 +1,11 @@
 import { defineBoot } from '#q-app/wrappers'
 import axios from 'axios'
 
+// In prod/staging su Netlify usiamo il proxy → baseURL = '/' (stessa origin)
+// In locale (quasar dev) useremo un dev proxy (vedi punto 4)
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000',
-  withCredentials: false
+  baseURL: import.meta.env.VITE_API_BASE_URL || '/', // default '/'
+  withCredentials: false // rotte /public non usano cookie
 })
 
 export default defineBoot(({ app }) => {
