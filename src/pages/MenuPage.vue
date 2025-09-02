@@ -1,75 +1,107 @@
-<!-- src/pages/MenuPage.vue -->
-<template>
-  <q-page class="q-pa-lg">
-    <div class="q-mb-md">
-      <q-breadcrumbs>
-        <q-breadcrumbs-el label="Home" to="/" />
-        <q-breadcrumbs-el :label="decodedName" :to="{ name: 'business', params: { businessName: decodedName } }" />
-        <q-breadcrumbs-el label="Menu" />
-      </q-breadcrumbs>
-    </div>
-
-    <q-skeleton v-if="loading" type="rect" height="120px" class="q-mb-lg" />
-
-    <div v-else>
-      <div v-if="current">
-        <div class="text-h4 q-mb-sm">Menù — {{ current.name }}</div>
-        <div class="text-subtitle2 text-grey-7 q-mb-lg">{{ current.type || 'Locale' }}</div>
-
-        <div v-if="current.categoryRoots?.length">
-          <div class="text-subtitle1 q-mb-sm">Categorie</div>
-          <div class="row q-col-gutter-sm">
-            <div v-for="cat in current.categoryRoots" :key="cat._id" class="col-auto">
-              <q-chip outline>{{ cat.title }}</q-chip>
-            </div>
-          </div>
-        </div>
-
-        <q-banner v-else class="bg-grey-2 q-mt-md" rounded>
-          Nessuna categoria di catalogo configurata per questo locale.
-        </q-banner>
-      </div>
-
-      <q-banner v-else class="bg-orange-1 text-orange-10" rounded>
-        <template #avatar><q-icon name="warning"/></template>
-        Locale “{{ decodedName }}” non trovato.
-      </q-banner>
-    </div>
-  </q-page>
-</template>
-
 <script setup>
-import { computed, onMounted, ref, watch } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
-import { api } from 'boot/axios'
+import { useI18n } from 'vue-i18n'
 import { useAppStore } from 'stores/app'
+import { useAttributesStore } from 'stores/attributes'
+import { useLangStore } from 'stores/lang'
+import { useCategoriesStore } from 'stores/categories'
+import { useBusinessStore } from 'stores/business' // 👈 AGGIUNTO
+
+import LanguageButton from 'components/menu/LanguageButton.vue'
+import AllergenButton from 'components/menu/AllergenButton.vue'
+import CategoryTitle from 'components/menu/CategoryTitle.vue'
+import FooterNav from 'components/menu/FooterNav.vue'
 
 const route = useRoute()
 const app = useAppStore()
+const attrs = useAttributesStore()
+const langStore = useLangStore()
+const categories = useCategoriesStore()
+const business = useBusinessStore() // 👈 QUI
 
-const loading = ref(false)
-const current = ref(null)
+const { locale, t } = useI18n()
+
+// const loading = ref(false)
+const current = computed(() => business.current) // 👈 ORA È REATTIVO
+const currentCategory = ref(null)
+const allergenSelected = ref([])
 
 const decodedName = computed(() =>
   String(route.params.businessName || '').replace(/\s+/g, ' ').trim()
 )
 
-async function fetchBusiness() {
-  loading.value = true
-  current.value = null
-  try {
-    const nameParam = encodeURIComponent(decodedName.value)
-    const { data } = await api.get(`/public/business/by-name/${nameParam}`)
-    current.value = data.current || null
-    app.setCurrentBusinessName(current.value?.name || null) // <-- per header
-  } catch {
-    current.value = null
-    app.setCurrentBusinessName(null)
-  } finally {
-    loading.value = false
-  }
-}
+const lang = computed(() => langStore.lang)
+locale.value = lang.value
 
-onMounted(fetchBusiness)
-watch(() => route.params.businessName, fetchBusiness)
+watch(lang, (val) => {
+  locale.value = val
+})
+
+const allergenOptions = computed(() =>
+  attrs.allergensFor(lang.value)
+)
+
+onMounted(async () => {
+  await Promise.all([
+    app.ensureCompanyLoaded(),
+    attrs.fetchAllergens()
+  ])
+  await business.fetchByName(decodedName.value) // 👈 CAMBIATO
+  if (business.current?._id) {
+    await categories.fetchCategoriesForBusiness(business.current._id)
+  }
+})
+
+watch(() => route.params.businessName, async () => {
+  await business.fetchByName(decodedName.value) // 👈 CAMBIATO
+  if (business.current?._id) {
+    await categories.fetchCategoriesForBusiness(business.current._id)
+  }
+})
 </script>
+
+
+<template>
+  <q-page class="q-pa-none">
+    <div class="menu-header row items-center justify-between q-px-md q-py-sm">
+      <div class="col-auto">
+        <LanguageButton
+          :options="[
+            { code: 'it', label: t('availableLanguages.it'), flag: '/flags/it.png' },
+            { code: 'en', label: t('availableLanguages.en'), flag: '/flags/gb.png' }
+          ]"
+        />
+      </div>
+
+      <div class="col text-center">
+        <CategoryTitle
+          :title="currentCategory?.translations?.title?.[lang] || currentCategory?.title || t('selectCategory')"
+          :subtitle="current?.name || ''"
+        />
+      </div>
+
+      <div class="col-auto">
+        <AllergenButton
+          :selected="allergenSelected"
+          :options="allergenOptions"
+          @update:selected="val => allergenSelected = val"
+        />
+      </div>
+    </div>
+
+    <!-- 👇 Footer visibile in fondo -->
+    <FooterNav />
+  </q-page>
+</template>
+
+<style scoped>
+.menu-header {
+  position: sticky;
+  top: 56px;
+  z-index: 10;
+  background: var(--leccese, #f1eee6);
+  border-bottom: 1px solid rgba(0,0,0,0.06);
+  backdrop-filter: blur(6px);
+}
+</style>
