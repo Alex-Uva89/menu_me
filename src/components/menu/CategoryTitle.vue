@@ -1,3 +1,4 @@
+<!-- src/components/menu/CategoryTitle.vue -->
 <template>
   <div class="column items-center">
     <div class="text-subtitle1 text-weight-bold ellipsis">
@@ -20,7 +21,6 @@ const categories = useCategoriesStore()
 const business = useBusinessStore()
 
 const selected = computed(() => categories.categorySelected || categories.currentParent)
-
 function localize(cat) {
   const loc = locale.value
   return (cat?.translations && cat.translations[loc]) || cat?.title || ''
@@ -29,5 +29,3 @@ function localize(cat) {
 const resolvedTitle = computed(() => localize(selected.value) || t('selectCategory'))
 const resolvedSubtitle = computed(() => business.current?.name || '')
 </script>
-
-<style scoped></style>

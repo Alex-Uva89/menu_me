@@ -1,3 +1,4 @@
+<!-- src/components/menu/FooterNav.vue -->
 <script setup>
 import { computed } from 'vue'
 import { useCategoriesStore } from 'stores/categories'
@@ -16,7 +17,6 @@ function labelOf(cat) {
   return (cat?.translations && cat.translations[loc]) || cat?.title || ''
 }
 
-// Colore sfondo dal business (semplice)
 const bgColor = computed(() => business.current?.brandColor || 'var(--q-primary, var(--leccese, #f1eee6))')
 </script>
 
@@ -47,7 +47,9 @@ const bgColor = computed(() => business.current?.brandColor || 'var(--q-primary,
       <div class="row items-center justify-between q-mb-sm">
         <div class="row items-center no-wrap">
           <q-btn flat dense icon="arrow_back" class="q-mr-xs" @click="categories.backToRoots" aria-label="Back" />
-          <h6 class="text-subtitle1 q-my-none">{{ labelOf(categories.currentParent) }}</h6>
+          <h6 class="text-subtitle1 q-my-none">
+            {{ labelOf(categories.currentParent) }}
+          </h6>
         </div>
       </div>
 
@@ -74,16 +76,13 @@ const bgColor = computed(() => business.current?.brandColor || 'var(--q-primary,
   position: fixed;
   left: 0; right: 0; bottom: 0;
   width: 100%;
-  min-height: 150px;
   z-index: 999;
   border-top: 1px solid rgba(0,0,0,0.06);
   backdrop-filter: blur(6px);
   padding-bottom: env(safe-area-inset-bottom);
 }
-
-/* mobile-first: bottoni in colonna */
 .cats-wrap{ display:flex; flex-wrap:wrap; gap:.5rem; }
-.cat-btn{ flex:1 1 100%; text-transform:none; justify-content:flex-start; padding-left:.5rem; padding-right:.5rem; background-color: rgba(255, 255, 255, 0.356); border-radius: 10px;}
+.cat-btn{ flex:1 1 100%; text-transform:none; justify-content:flex-start; padding-left:.5rem; padding-right:.5rem; }
 @media (min-width:480px){ .cat-btn{ flex:1 1 calc(50% - .5rem); } }
 @media (min-width:768px){ .cat-btn{ flex:1 1 calc(33.333% - .5rem); } }
 </style>

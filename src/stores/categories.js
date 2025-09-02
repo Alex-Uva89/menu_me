@@ -1,4 +1,4 @@
-// stores/categories.js
+// src/stores/categories.js
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { api } from 'boot/axios'
@@ -9,9 +9,9 @@ export const useCategoriesStore = defineStore('categories', () => {
   const loading = ref(false)
   const error = ref(null)
 
-  // root aperta nel footer per mostrare i figli
+  // root aperta nel footer
   const currentParent = ref(null)
-  // 🔥 selezione globale usabile ovunque
+  // selezione globale (sottocategoria)
   const categorySelected = ref(null)
 
   async function fetchCategoriesForBusiness(businessId) {
@@ -20,9 +20,8 @@ export const useCategoriesStore = defineStore('categories', () => {
     try {
       const { data } = await api.get(`/public/categories/${businessId}`)
       roots.value = Array.isArray(data?.roots) ? data.roots : []
-      all.value = Array.isArray(data?.all) ? data.all : []
-      // reset vista/footer + selezione globale
-      currentParent.value = null
+      all.value   = Array.isArray(data?.all)   ? data.all   : []
+      currentParent.value  = null
       categorySelected.value = null
     } catch (e) {
       error.value = e?.message || 'Errore nel caricamento categorie'
@@ -33,24 +32,48 @@ export const useCategoriesStore = defineStore('categories', () => {
     }
   }
 
-  // categorie visibili nel footer (root o figli della root aperta)
+  function getChildrenOf(parentId) {
+    return all.value.filter(c =>
+      Array.isArray(c.parents) && c.parents.some(p => p?._id === parentId)
+    )
+  }
+
   const visibleCategories = computed(() => {
     if (!currentParent.value) return roots.value
-    const pid = currentParent.value._id
-    return all.value.filter(c => Array.isArray(c.parents) && c.parents.some(p => p?._id === pid))
+    return getChildrenOf(currentParent.value._id)
   })
 
-  // azioni semplici
   function openRoot(cat) {
     currentParent.value = cat
-    categorySelected.value = cat // se vuoi mostrare subito la root in CategoryTitle
+    // se la selezione attuale non è figlia di questa root, resetta
+    const isChild =
+      categorySelected.value &&
+      Array.isArray(categorySelected.value.parents) &&
+      categorySelected.value.parents.some(p => p?._id === cat?._id)
+    if (!isChild) categorySelected.value = null
   }
+
   function selectCategory(cat) {
     categorySelected.value = cat
   }
+
   function backToRoots() {
     currentParent.value = null
     categorySelected.value = null
+  }
+
+  // auto-seleziona la prima sottocategoria disponibile
+  function autoSelectFirstSubcategory() {
+    if (categorySelected.value) return false
+    for (const r of roots.value) {
+      const kids = getChildrenOf(r._id)
+      if (kids.length) {
+        currentParent.value = r
+        categorySelected.value = kids[0]
+        return true
+      }
+    }
+    return false
   }
 
   return {
@@ -60,6 +83,8 @@ export const useCategoriesStore = defineStore('categories', () => {
     // computed
     visibleCategories,
     // actions
-    fetchCategoriesForBusiness, openRoot, selectCategory, backToRoots
+    fetchCategoriesForBusiness, getChildrenOf,
+    openRoot, selectCategory, backToRoots,
+    autoSelectFirstSubcategory
   }
 })

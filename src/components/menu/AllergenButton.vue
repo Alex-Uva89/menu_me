@@ -23,7 +23,6 @@
           <q-badge v-if="hiddenCount > 0" color="primary" class="q-ml-xs">+{{ hiddenCount }}</q-badge>
         </div>
         <q-icon v-else name="science" class="q-mr-xs" />
-        <span>{{ $t('allergens') }}</span>
       </div>
     </q-btn>
 
