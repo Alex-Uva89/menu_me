@@ -20,13 +20,6 @@
             clickable
             @click="select(opt.code)"
           >
-            <q-item-section avatar v-if="opt.flag">
-              <q-avatar>
-                <div style="font-size: 18px; line-height: 1; text-align: center; width: 100%; height: 100%;">
-                  {{ opt.flag }}
-                </div>
-              </q-avatar>
-            </q-item-section>
 
             <q-item-section>
               <q-item-label>{{ opt.label || opt.code.toUpperCase() }}</q-item-label>
