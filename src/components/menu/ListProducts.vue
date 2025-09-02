@@ -69,7 +69,7 @@ const showPriceHeader = computed(() =>
 </script>
 
 <template>
-  <div class="menu-list q-px-md q-pt-xl q-pb-xl">
+  <div class="menu-list q-px-md q-pt-md q-pb-xl">
     <!-- stato senza sottocategoria -->
     <div v-if="!hasSubcategory" class="placeholder">
       {{ t('selectCategory') }}
