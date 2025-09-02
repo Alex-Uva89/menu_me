@@ -17,6 +17,16 @@ function labelOf(cat) {
   return (cat?.translations && cat.translations[loc]) || cat?.title || ''
 }
 
+function onRootClick(cat) {
+  // Apri la root ma NON selezionare la root
+  categories.openRoot(cat)
+  // Se c'è almeno una sottocategoria, seleziona la prima (così la lista non resta vuota)
+  const kids = categories.getChildrenOf(cat._id)
+  if (kids && kids.length) {
+    categories.selectCategory(kids[0])
+  }
+}
+
 const bgColor = computed(() => business.current?.brandColor || 'var(--q-primary, var(--leccese, #f1eee6))')
 </script>
 
@@ -33,7 +43,7 @@ const bgColor = computed(() => business.current?.brandColor || 'var(--q-primary,
           :label="labelOf(cat)"
           flat
           class="cat-btn"
-          @click="categories.openRoot(cat)"
+          @click="onRootClick(cat)"
         />
       </div>
 
@@ -46,8 +56,13 @@ const bgColor = computed(() => business.current?.brandColor || 'var(--q-primary,
     <div v-else>
       <div class="row items-center justify-between q-mb-sm">
         <div class="row items-center no-wrap">
-          <q-btn flat dense icon="arrow_back" class="q-mr-xs" @click="categories.backToRoots" aria-label="Back" />
-          <h6 class="text-subtitle1 q-my-none">
+          <q-btn
+            flat dense icon="arrow_back"
+            class="q-mr-xs"
+            @click="categories.backToRoots"
+            aria-label="Back"
+          />
+          <h6 class="text-subtitle1 q-my-none text-white">
             {{ labelOf(categories.currentParent) }}
           </h6>
         </div>
@@ -81,8 +96,30 @@ const bgColor = computed(() => business.current?.brandColor || 'var(--q-primary,
   backdrop-filter: blur(6px);
   padding-bottom: env(safe-area-inset-bottom);
 }
-.cats-wrap{ display:flex; flex-wrap:wrap; gap:.5rem; }
-.cat-btn{ flex:1 1 100%; text-transform:none; justify-content:flex-start; padding-left:.5rem; padding-right:.5rem; }
-@media (min-width:480px){ .cat-btn{ flex:1 1 calc(50% - .5rem); } }
-@media (min-width:768px){ .cat-btn{ flex:1 1 calc(33.333% - .5rem); } }
+
+/* Mobile-first: 2 per riga */
+.cats-wrap{
+  display: flex;
+  flex-wrap: wrap;
+  gap: .5rem;
+}
+.cat-btn{
+  flex: 1 1 calc(50% - .5rem);
+  text-transform: none;
+  justify-content: flex-start;
+  padding-left: .5rem;
+  padding-right: .5rem;
+  background-color: rgba(255, 255, 255, 0.288);
+  color: aliceblue;
+}
+
+/* Tablet: 3 per riga */
+@media (min-width: 768px){
+  .cat-btn{ flex: 1 1 calc(33.333% - .5rem); }
+}
+
+/* Desktop grande: 4 per riga (opzionale) */
+@media (min-width: 1200px){
+  .cat-btn{ flex: 1 1 calc(25% - .5rem); }
+}
 </style>
