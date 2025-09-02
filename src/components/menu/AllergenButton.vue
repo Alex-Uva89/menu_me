@@ -4,7 +4,7 @@
     <q-btn
       dense
       outline
-      :color="selectedCount ? 'primary' : 'grey-8'"
+      :color="selectedCount ? 'primary' : 'grey-2'"
       :aria-label="t('filterForAllergens')"
       @click="dialog = true"
     >

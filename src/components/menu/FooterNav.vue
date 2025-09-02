@@ -58,7 +58,7 @@ const bgColor = computed(() => business.current?.brandColor || 'var(--q-primary,
         <div class="row items-center no-wrap">
           <q-btn
             flat dense icon="arrow_back"
-            class="q-mr-xs"
+            class="q-mr-xs text-white"
             @click="categories.backToRoots"
             aria-label="Back"
           />
@@ -110,7 +110,8 @@ const bgColor = computed(() => business.current?.brandColor || 'var(--q-primary,
   padding-left: .5rem;
   padding-right: .5rem;
   background-color: rgba(255, 255, 255, 0.288);
-  color: aliceblue;
+  color: rgb(255, 255, 255);
+  border-radius: 10px;
 }
 
 /* Tablet: 3 per riga */
