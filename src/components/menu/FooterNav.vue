@@ -12,6 +12,7 @@ const business = useBusinessStore()
 const { t, locale } = useI18n()
 
 const isRootView = computed(() => !categories.currentParent)
+/** 👇 NESSUN ORDINAMENTO: usiamo l'ordine come arriva dallo store/BE */
 const visible = computed(() => categories.visibleCategories)
 
 function labelOf(cat) {
@@ -19,10 +20,11 @@ function labelOf(cat) {
   return (cat?.translations && cat.translations[loc]) || cat?.title || ''
 }
 
+/* ---- Navigazione (nessun sort: prendo il primo figlio così com'è) ---- */
 function onRootClick(cat) {
   categories.openRoot(cat)
-  const kids = categories.getChildrenOf(cat._id)
-  if (kids && kids.length) categories.selectCategory(kids[0])
+  const kids = categories.getChildrenOf(cat._id) || []
+  if (kids.length) categories.selectCategory(kids[0])
 }
 
 const bgColor = computed(() => business.current?.brandColor || 'var(--q-primary, var(--leccese, #f1eee6))')
@@ -32,7 +34,6 @@ const isMobile = computed(() => $q.screen.lt.md)
 const open = ref(true) // desktop default: open
 
 watchEffect(() => {
-  // Quando passo a mobile, chiudi; quando passo a desktop, apri
   open.value = isMobile.value ? false : true
 })
 
@@ -149,7 +150,7 @@ function toggleOpen() { open.value = !open.value }
   font-weight: 600;
 }
 
-/* Contenuto interno (griglia) */
+/* Contenuto interno */
 .content-wrap{
   margin-top: .5rem;
 }
