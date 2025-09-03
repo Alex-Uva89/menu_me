@@ -28,8 +28,6 @@ watch(
   async (catId) => {
     if (hasSubcategory.value && catId) {
       await products.fetchByCategory(catId)
-    } else {
-      products.clear()
     }
   },
   { immediate: true }
@@ -71,7 +69,7 @@ const showPriceHeader = computed(() =>
 <template>
   <div class="menu-list q-px-md q-pt-md q-pb-xl">
     <!-- stato senza sottocategoria -->
-    <div v-if="!hasSubcategory" class="placeholder">
+    <div v-if="!hasSubcategory && products.items.length === 0" class="placeholder">
       {{ t('selectCategory') }}
     </div>
 

@@ -12,7 +12,11 @@ export default {
     en: 'English'
   },
   footer: {
-    "selectCategory": "Select a category"
+    hideCategories: 'Hide categories',
+    browseCategories: 'Categories',
+    selectCategory: 'Select a category',
+    noCategories: 'No categories available',
+    noSubcategories: 'No subcategories available'
   }
 
 }

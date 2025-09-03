@@ -12,6 +12,10 @@ export default {
     en: 'Inglese'
   },
   footer: {
-    "selectCategory": "Scegli una categoria"
+    hideCategories: 'Nascondi categorie',
+    browseCategories: 'Categorie',
+    selectCategory: 'Seleziona una categoria',
+    noCategories: 'Nessuna categoria disponibile',
+    noSubcategories: 'Nessuna sottocategoria disponibile'
   }
 }
