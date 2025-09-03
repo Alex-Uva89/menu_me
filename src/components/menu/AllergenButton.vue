@@ -22,7 +22,7 @@
           </q-avatar>
           <q-badge v-if="hiddenCount > 0" color="primary" class="q-ml-xs">+{{ hiddenCount }}</q-badge>
         </div>
-        <q-icon v-else name="science" class="q-mr-xs" />
+        <q-icon v-else name="filter_alt" class="q-mx-sm" />
       </div>
     </q-btn>
 
@@ -144,7 +144,8 @@ function chipColor(a) {
 .filter-card{
   width: 100%;
   max-width: 100vw;
-  border-radius: 16px 16px 0 0;       /* bottom sheet look su mobile */
+  border-radius: 16px 16px 0 0;
+  background-color: #E8E2D6;
 }
 
 /* Desktop: card centrata, più stretta e con radius pieni */

@@ -1,0 +1,66 @@
+/* src/css/fonts.css — file pubblici in /public/fonts */
+
+/* Light 300 */
+@font-face {
+  font-family: "Decima Mono Pro";
+  src:
+    url("/fonts/DecimaMonoProLt.woff2") format("woff2"),
+    url("/fonts/DecimaMonoProLt.otf") format("opentype"),
+    url("/fonts/DecimaMonoProLt.ttf") format("truetype");
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Decima Mono Pro";
+  src:
+    url("/fonts/DecimaMonoProLt-Italic.woff2") format("woff2"),
+    url("/fonts/DecimaMonoProLt-Italic.ttf") format("truetype");
+  font-weight: 300;
+  font-style: italic;
+  font-display: swap;
+}
+
+/* Regular 400 */
+@font-face {
+  font-family: "Decima Mono Pro";
+  src:
+    url("/fonts/DecimaMonoPro.woff2") format("woff2"),
+    url("/fonts/DecimaMonoPro.otf") format("opentype"),
+    url("/fonts/DecimaMonoPro.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Decima Mono Pro";
+  src:
+    url("/fonts/DecimaMonoPro-Italic.woff2") format("woff2"),
+    url("/fonts/DecimaMonoPro-Italic.otf") format("opentype"),
+    url("/fonts/DecimaMonoPro-Italic.ttf") format("truetype");
+  font-weight: 400;
+  font-style: italic;
+  font-display: swap;
+}
+
+/* Bold 700 */
+@font-face {
+  font-family: "Decima Mono Pro";
+  src:
+    url("/fonts/DecimaMonoPro-Bold.woff2") format("woff2"),
+    url("/fonts/DecimaMonoPro-Bold.otf") format("opentype"),
+    url("/fonts/DecimaMonoPro-Bold.ttf") format("truetype");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Decima Mono Pro";
+  src:
+    url("/fonts/DecimaMonoPro-BoldItalic.woff2") format("woff2"),
+    url("/fonts/DecimaMonoPro-BoldItalic.otf") format("opentype"),
+    url("/fonts/DecimaMonoPro-BoldItalic.ttf") format("truetype");
+  font-weight: 700;
+  font-style: italic;
+  font-display: swap;
+}

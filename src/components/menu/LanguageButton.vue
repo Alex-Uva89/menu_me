@@ -11,7 +11,7 @@
 
     <q-dialog v-model="dialog" persistent>
       <q-card class="q-pa-md" style="min-width: 300px; max-width: 400px;">
-        <q-card-section class="text-h6">Seleziona lingua</q-card-section>
+        <q-card-section class="text-h6">{{ $t('selectLanguage') }}</q-card-section>
 
         <q-list bordered separator>
           <q-item

@@ -17,5 +17,6 @@ export default {
     selectCategory: 'Seleziona una categoria',
     noCategories: 'Nessuna categoria disponibile',
     noSubcategories: 'Nessuna sottocategoria disponibile'
-  }
+  },
+  selectLanguage: 'Seleziona lingua'
 }

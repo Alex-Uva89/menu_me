@@ -17,6 +17,6 @@ export default {
     selectCategory: 'Select a category',
     noCategories: 'No categories available',
     noSubcategories: 'No subcategories available'
-  }
-
+  },
+  selectLanguage: 'Select language'
 }
