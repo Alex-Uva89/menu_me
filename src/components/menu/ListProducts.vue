@@ -178,7 +178,7 @@ const showPriceHeader = computed(() =>
 /* header colonne prezzo (icone) */
 .price-header{
   display: grid;
-  grid-template-columns: 1fr 72px 72px;  /* nome | calice | bottiglia */
+  grid-template-columns: 1fr 82px 30px;  /* nome | calice | bottiglia */
   align-items: center;
   column-gap: 28px;
   padding: 4px 0 8px;
@@ -198,7 +198,7 @@ const showPriceHeader = computed(() =>
 }
 .product-row{
   display: grid;
-  grid-template-columns: 1fr 72px 72px; /* stabile e leggibile */
+  grid-template-columns: 1fr 70px 30px; /* stabile e leggibile */
   align-items: start;
   column-gap: 28px;
   row-gap: 4px;
