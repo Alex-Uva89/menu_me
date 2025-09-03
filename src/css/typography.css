@@ -2,8 +2,9 @@
 
 /* ====== Base ====== */
 :root{
-  --font-base: "Decima Mono Pro";
-  --ls-caps: .06em;  /* letter-spacing per uppercase */
+  --font-base: "Decima Mono Pro", system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+  --ls-body: -0.015em; 
+  --ls-caps: 0.06em;
 }
 
 html, body, #q-app {
@@ -11,15 +12,13 @@ html, body, #q-app {
   font-weight: 400;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
+  letter-spacing: var(--ls-body);        /* tracking globale “tight” */
 }
 
-/* Numeri sempre leggibili/allineati dove serve */
-.num, .price-num, .q-badge, .q-btn .q-btn__content {
-  font-variant-numeric: tabular-nums;
-}
+/* Numeri tabulari dove serve */
+.num, .price-num, .q-badge, .q-btn .q-btn__content { font-variant-numeric: tabular-nums; }
 
-/* ====== Titoli e sottotitoli in stampatello + bold ====== */
-/* Quasar usa queste utility: allineiamo anche loro */
+/* Titoli & sottotitoli in caps, leggermente più larghi */
 h1, h2, h3, h4, h5, h6,
 .text-h1, .text-h2, .text-h3, .text-h4, .text-h5, .text-h6,
 .text-subtitle1, .text-subtitle2 {
@@ -29,43 +28,31 @@ h1, h2, h3, h4, h5, h6,
   letter-spacing: var(--ls-caps);
 }
 
-/* didascalie/rest info: più sobrie (no caps) */
+/* Didascalie più neutre */
 .text-caption, .q-item__label--caption, small {
   font-weight: 400;
   text-transform: none;
   letter-spacing: 0;
 }
 
-/* ====== Bottoni, badge, chip ====== */
-.q-btn .q-btn__content {
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: .04em;
-}
-
+/* Bottoni/badge coerenti */
+.q-btn .q-btn__content,
 .q-badge {
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: .04em;
 }
 
-/* ====== Input & card ====== */
+/* Input & card */
 .q-input, .q-field, .q-card, .q-banner, .q-toolbar, .q-dialog, .q-list, .q-item {
   font-family: var(--font-base);
 }
 
-/* ====== Eccezioni utili ====== */
-/* Usa .no-caps quando NON vuoi uppercase (es. nomi prodotti) */
-.no-caps {
-  text-transform: none !important;
-  letter-spacing: 0 !important;
-  font-weight: inherit !important;
-}
-
-/* Testo secondario/descrittivo leggermente più chiaro */
+/* Eccezioni utili */
+.no-caps { text-transform: none !important; letter-spacing: 0 !important; font-weight: inherit !important; }
 .muted { opacity: .75; }
 
-/* ====== Fine tuning mobile ====== */
+/* Mobile fine-tuning */
 @media (max-width: 599.98px){
   .text-h4, .text-h5, .text-h6, h4, h5, h6 { letter-spacing: .055em; }
 }
