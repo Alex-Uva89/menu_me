@@ -10,8 +10,8 @@
 
       <!-- HERO REALE -->
       <div v-else key="hero" class="hero q-px-lg" :style="heroStyle">
-        <div class="row items-center no-wrap h-full">
-
+        <!-- Desktop / tablet: vista completa -->
+        <div class="row items-center no-wrap h-full gt-sm">
           <div class="col">
             <div class="text-h4 text-weight-bold text-white ellipsis">
               {{ current?.name || decodedName || 'Locale' }}
@@ -38,6 +38,17 @@
               :disable="!current" @click="goToMenu"
             />
           </div>
+        </div>
+
+        <!-- Mobile: solo sfondo + CTA -->
+        <div class="h-full lt-md mobile-hero">
+          <q-btn
+            rounded unelevated icon="restaurant_menu"
+            color="white" text-color="primary" label="Apri Menù"
+            class="mobile-cta"
+            :disable="!current"
+            @click="goToMenu"
+          />
         </div>
       </div>
     </transition>
@@ -197,7 +208,6 @@ onMounted(load)
 watch(() => route.params.businessName, load)
 </script>
 
-
 <style scoped>
 .h-full { min-height: 50vh; display: flex; align-items: center; }
 .hero {
@@ -206,15 +216,27 @@ watch(() => route.params.businessName, load)
   box-shadow: 0 8px 24px rgba(0,0,0,0.12);
 }
 
+/* Mobile-first adjustments */
+.mobile-hero {
+  width: 100%;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 16px 0 8px;
+}
+.mobile-cta {
+  width: calc(100% - 32px);
+  max-width: 360px;
+}
+
+/* Desktop cards & tiles */
 .rounded-borders { border-radius: 16px; }
 .card-elevated { box-shadow: 0 4px 14px rgba(0,0,0,0.06); }
 .card-hover { transition: transform .16s ease, box-shadow .16s ease; }
 .card-hover:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(0,0,0,0.10); }
 
 /* Tile con immagine di sfondo */
-.bg-tile {
-  position: relative;
-}
+.bg-tile { position: relative; }
 
 /* Iniziali al centro (fallback quando manca logo) */
 .tile-initials {
@@ -251,4 +273,9 @@ watch(() => route.params.businessName, load)
 /* fade */
 .fade-enter-active, .fade-leave-active { transition: opacity .12s ease; }
 .fade-enter-from, .fade-leave-to { opacity: 0; }
+
+/* Tweak padding hero su schermi piccoli */
+@media (max-width: 599.98px) {
+  .hero { padding-top: 24px !important; padding-bottom: 24px !important; }
+}
 </style>
