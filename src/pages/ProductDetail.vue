@@ -193,7 +193,7 @@ onMounted(async () => {
       const name = String(route.params.businessName || '').replace(/\s+/g, ' ').trim()
       if (name) await business.fetchByName(name)
     } catch (e) {
-  console.log(e)}
+      console.log(e)}
   }
 })
 
@@ -226,7 +226,9 @@ function L (key, fallback) {
   try {
     const s = t(key)
     return s === key ? (fallback || key) : s
-  } catch { return fallback || key }
+  } catch(e) {
+    console.log(e)
+    return fallback || key }
 }
 
 /* ===== immagini & parallax (soft) ===== */
@@ -342,7 +344,7 @@ async function share () {
       $q.notify({ type: 'positive', message: 'Link copiato negli appunti' })
     }
   } catch (e) {
-    console.log('utente ha annullato / share non disponibile'. e)
+    console.log('utente ha annullato / share non disponibile', e)
   }
 }
 </script>
