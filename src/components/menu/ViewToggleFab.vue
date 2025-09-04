@@ -1,57 +1,75 @@
 <!-- src/components/menu/ViewToggleFab.vue -->
 <script setup>
-import { ref } from 'vue'
+import { computed } from 'vue'
 
-defineProps({
+const props = defineProps({
   view: { type: String, default: 'list' }, // 'list' | 'cards'
-  listLabel: { type: String, default: 'Lista' },
+  // etichette usate solo per aria-label e tooltip
+  listLabel:  { type: String, default: 'Lista' },
   cardsLabel: { type: String, default: 'Cards' },
-  color: { type: String, default: 'primary' },
-  textColor: { type: String, default: 'white' },
-
-  // nuovo: apre verso sinistra (left) per default
-  direction: { type: String, default: 'left' }, // 'up' | 'right' | 'down' | 'left'
-  // nuovo: allineamento per direzioni orizzontali (left/right)
-  horizontalAlign: { type: String, default: 'bottom' } // 'top' | 'center' | 'bottom'
+  color: { type: String, default: 'primary' },   // colore attivo
+  textColor: { type: String, default: 'white' }, // testo icona attiva
+  size: { type: String, default: 'md' },         // 'xs'|'sm'|'md'|'lg'|'xl'
+  dense: { type: Boolean, default: true },
+  showTooltips: { type: Boolean, default: true } // tooltip su hover
 })
 
-const emit = defineEmits(['update:view', 'toggle'])
-const open = ref(false)
+const emit = defineEmits(['update:view'])
 
 function setView(v) {
-  emit('update:view', v)
-  open.value = false
+  if (v !== props.view) emit('update:view', v)
 }
+
+const isList  = computed(() => props.view === 'list')
+const isCards = computed(() => props.view === 'cards')
 </script>
 
 <template>
-  <q-fab
-    v-model="open"
-    :color="color"
-    :text-color="textColor"
-    icon="view_module"
-    active-icon="close"
-    glossy
-    padding="xs"
-    size="md"
-    :direction="direction"
-    :horizontal-actions-align="horizontalAlign"
-    aria-label="Cambia vista"
-    @click="emit('toggle', open)"
-  >
-    <q-fab-action
-      :color="view === 'list' ? color : 'grey-6'"
-      :text-color="textColor"
-      icon="list"
-      :label="listLabel"
-      @click="setView('list')"
-    />
-    <q-fab-action
-      :color="view === 'cards' ? color : 'grey-6'"
-      :text-color="textColor"
-      icon="grid_view"
-      :label="cardsLabel"
-      @click="setView('cards')"
-    />
-  </q-fab>
+  <div class="floating-toggle">
+    <q-btn-group rounded unelevated>
+      <q-btn
+        :dense="dense"
+        :size="size"
+        round
+        icon="list"
+        :color="isList ? color : 'grey-4'"
+        :text-color="isList ? textColor : 'grey-8'"
+        :flat="!isList"
+        :outline="!isList"
+        @click="setView('list')"
+        :aria-pressed="isList"
+        :aria-label="listLabel"
+      >
+        <q-tooltip v-if="showTooltips" anchor="top middle" self="bottom middle">
+          {{ listLabel }}
+        </q-tooltip>
+      </q-btn>
+
+      <q-btn
+        :dense="dense"
+        :size="size"
+        round
+        icon="grid_view"
+        :color="isCards ? color : 'grey-4'"
+        :text-color="isCards ? textColor : 'grey-8'"
+        :flat="!isCards"
+        :outline="!isCards"
+        @click="setView('cards')"
+        :aria-pressed="isCards"
+        :aria-label="cardsLabel"
+      >
+        <q-tooltip v-if="showTooltips" anchor="top middle" self="bottom middle">
+          {{ cardsLabel }}
+        </q-tooltip>
+      </q-btn>
+    </q-btn-group>
+  </div>
 </template>
+
+<style scoped>
+.floating-toggle{
+  backdrop-filter: blur(8px);
+  border-radius: 9999px;
+  box-shadow: 0 8px 22px rgba(0,0,0,.18);
+}
+</style>
