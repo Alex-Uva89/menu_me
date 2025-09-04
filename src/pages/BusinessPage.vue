@@ -40,8 +40,25 @@
           </div>
         </div>
 
-        <!-- Mobile: solo sfondo + CTA -->
+        <!-- Mobile: sfondo + pannello orari + CTA -->
         <div class="h-full lt-md mobile-hero">
+          <div
+            v-if="current"
+            class="mobile-hours"
+            role="status"
+            aria-live="polite"
+          >
+            <div class="row items-center no-wrap">
+              <q-badge :color="isOpenComputed(current) ? 'positive' : 'negative'" outline>
+                {{ statusLabel(current) }}
+              </q-badge>
+              <div class="hours-text ellipsis">
+                <q-icon name="schedule" size="16px" class="q-mr-xs" />
+                {{ todayText }}
+              </div>
+            </div>
+          </div>
+
           <q-btn
             rounded unelevated icon="restaurant_menu"
             color="white" text-color="primary" label="Apri Menù"
@@ -153,11 +170,9 @@ const todayText = computed(() => todayLabel(current.value))
 const heroStyle = computed(() => {
   const base = `var(--q-primary)`
   const logo = currentLogo.value
-
   const backgroundLayers = logo
     ? `url('${logo}') center/contain no-repeat, linear-gradient(135deg, ${base} 0%, ${base} 60%)`
     : `linear-gradient(135deg, ${base} 0%, ${base} 60%)`
-
   return {
     minHeight: '50vh',
     paddingTop: '48px',
@@ -216,14 +231,37 @@ watch(() => route.params.businessName, load)
   box-shadow: 0 8px 24px rgba(0,0,0,0.12);
 }
 
-/* Mobile-first adjustments */
+/* ===== Mobile hero ===== */
 .mobile-hero {
   width: 100%;
   display: flex;
-  align-items: flex-end;
-  justify-content: center;
-  padding: 16px 0 8px;
+  flex-direction: column;       /* orari sopra, CTA sotto */
+  align-items: center;
+  justify-content: flex-end;
+  padding: 16px 0 12px;
+  gap: 10px;
 }
+
+.mobile-hours{
+  width: calc(100% - 32px);
+  max-width: 420px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: rgba(255,255,255,0.92);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 6px 16px rgba(0,0,0,0.10);
+  color: #111;
+  font-weight: 600;
+}
+.mobile-hours .hours-text{
+  margin-left: 10px;
+  font-size: 14px;
+  line-height: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .mobile-cta {
   width: calc(100% - 32px);
   max-width: 360px;
