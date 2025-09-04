@@ -1,6 +1,5 @@
-<!-- src/pages/MenuPage.vue -->
 <script setup>
-import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount, watch, nextTick } from 'vue'
 import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 
@@ -17,6 +16,7 @@ import CategoryTitle from 'components/menu/CategoryTitle.vue'
 import FooterNav from 'components/menu/FooterNav.vue'
 import ListProducts from 'components/menu/ListProducts.vue'
 import BrandSplash from 'components/menu/BrandSplash.vue'
+import ViewToggleFab from 'components/menu/ViewToggleFab.vue'
 
 import { useSplashOnce } from 'src/utils/useSplashOnce'
 
@@ -31,6 +31,7 @@ const products = useProductsStore()
 
 const { locale, t } = useI18n()
 const allergenSelected = ref([])
+const view = ref('list') // 'list' | 'cards'
 
 const decodedName = computed(() =>
   String(route.params.businessName || '').replace(/\s+/g, ' ').trim()
@@ -66,13 +67,9 @@ const headerTextColor = computed(() => {
 })
 
 /* ===== Splash: solo prima volta della sessione ===== */
-const { showSplash, hide } = useSplashOnce({ mode: 'session' }) // 'local' se vuoi persistente
+const { showSplash, hide } = useSplashOnce({ mode: 'session' })
 let hideTimer = null
 
-// pronto quando:
-// - business caricato
-// - sottocategoria selezionata
-// - prodotti non stanno caricando (anche se 0)
 const bootReady = computed(() => {
   const hasBiz = !!business.current?._id
   const hasSub = !!categories.categorySelected?._id
@@ -81,16 +78,29 @@ const bootReady = computed(() => {
 })
 
 watch(bootReady, (ready) => {
-  // programma l'hide SOLO se lo splash è visibile (prima sessione)
   if (ready && showSplash.value) {
     clearTimeout(hideTimer)
-    hideTimer = setTimeout(() => { hide() }, 1000) // 1s di fade out
+    hideTimer = setTimeout(() => { hide() }, 1000)
   }
 })
 
-onBeforeUnmount(() => {
-  clearTimeout(hideTimer)
-})
+onBeforeUnmount(() => { clearTimeout(hideTimer) })
+
+/* ===== Offset FAB fisso (bottom-right, sopra al footer) ===== */
+const fabBottom = ref(120) // px sopra al footer; regola se il footer è più alto
+
+function computeFabBottom () {
+  // puoi mettere logica extra qui (safe-area, ecc.)
+  fabBottom.value = 120
+}
+function setupFab () {
+  computeFabBottom()
+  window.addEventListener('resize', computeFabBottom, { passive: true })
+}
+function cleanupFab () {
+  window.removeEventListener('resize', computeFabBottom)
+}
+
 
 /* ===== Boot sequence ===== */
 onMounted(async () => {
@@ -99,18 +109,23 @@ onMounted(async () => {
 
   if (business.current?._id) {
     await categories.fetchCategoriesForBusiness(business.current._id)
-    categories.autoSelectFirstSubcategory() // trigger fetch prodotti
+    categories.autoSelectFirstSubcategory()
   }
 
-  // Se per qualsiasi motivo tutto è già pronto e lo splash è visibile, chiudi dopo 1s
+  await nextTick()
+  setupFab()
+
   if (bootReady.value && showSplash.value) {
     hideTimer = setTimeout(() => { hide() }, 1000)
   }
 })
 
+onBeforeUnmount(() => {
+  cleanupFab()
+})
+
 /* ===== Cambio businessName ===== */
 watch(() => route.params.businessName, async () => {
-  // NON riattiviamo lo splash: showSplash resta false dopo la prima volta
   clearTimeout(hideTimer)
 
   await Promise.all([ app.ensureCompanyLoaded(), attrs.fetchAllergens() ])
@@ -121,7 +136,9 @@ watch(() => route.params.businessName, async () => {
     categories.autoSelectFirstSubcategory()
   }
 
-  // Se, per caso, è la primissima visita della sessione e lo splash è ancora visibile:
+  await nextTick()
+  computeFabBottom()
+
   if (bootReady.value && showSplash.value) {
     hideTimer = setTimeout(() => { hide() }, 1000)
   }
@@ -130,12 +147,12 @@ watch(() => route.params.businessName, async () => {
 
 <template>
   <q-page class="q-pa-none with-sticky-footer">
-    <!-- Splash: mostrato solo alla prima apertura della sessione -->
+    <!-- Splash solo alla prima apertura sessione -->
     <BrandSplash :show="showSplash" :color="brandHex" />
 
-    <!-- Contenuto: mostrato quando lo splash non è visibile -->
     <div v-show="!showSplash">
       <div
+        ref="headerEl"
         class="menu-header row items-center justify-between q-px-md q-pt-lg"
         :style="{ backgroundColor: brandHex, color: headerTextColor }"
       >
@@ -161,10 +178,17 @@ watch(() => route.params.businessName, async () => {
         </div>
       </div>
 
-      <!-- Lista prodotti -->
-      <ListProducts :selected-allergens="allergenSelected" />
+      <!-- FAB fissa (non si muove allo scroll) -->
+      <q-page-sticky position="bottom-right" :offset="[16, fabBottom]" class="fab-fixed">
+        <ViewToggleFab v-model:view="view" />
+      </q-page-sticky>
 
-      <!-- Footer nav -->
+      <!-- Lista prodotti controllata dalla pagina -->
+      <ListProducts
+        :selected-allergens="allergenSelected"
+        :view="view"
+      />
+
       <FooterNav />
     </div>
   </q-page>
@@ -178,6 +202,9 @@ watch(() => route.params.businessName, async () => {
   border-bottom: 1px solid rgba(0,0,0,0.06);
   backdrop-filter: blur(6px);
 }
+
+/* la FAB sta sopra la lista ma sotto eventuali overlay più alti */
+.fab-fixed { z-index: 11; }
 
 .with-sticky-footer {
   padding-bottom: 120px; /* evita che il footer copra la lista */
