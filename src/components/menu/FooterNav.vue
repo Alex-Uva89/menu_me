@@ -121,7 +121,7 @@ function onSubcatClick(cat){
 .footer-bar{ display:flex; justify-content:center; align-items:center; }
 .toggle-btn{
   width: 100%;
-  min-height: 44px;
+  min-height: 20px;
   padding: 0 16px;
   font-weight: 700;
 }
