@@ -11,6 +11,7 @@ const categories = useCategoriesStore()
 const business = useBusinessStore()
 const { t, locale } = useI18n()
 
+/* --- Colore di sfondo --- */
 const bgColor = computed(
   () => business.current?.brandColor || 'var(--q-primary, var(--leccese, #f1eee6))'
 )
@@ -19,10 +20,10 @@ const bgColor = computed(
 const isMobile = computed(() => $q.screen.lt.md)
 const open = ref(true)
 watchEffect(() => { open.value = isMobile.value ? false : true })
-function toggleOpen(){ open.value = !open.value }
+function toggleOpen () { open.value = !open.value }
 
 /* --- Label localizzata --- */
-function labelOf(cat){
+function labelOf (cat) {
   const loc = locale.value
   return (cat?.translations && cat.translations[loc]) || cat?.title || ''
 }
@@ -30,15 +31,27 @@ function labelOf(cat){
 /* --- Radici: SEMPRE dalle store.roots --- */
 const rootCats = computed(() => categories.roots || [])
 
-/* --- Sottocategorie: solo se c'è una root selezionata --- */
-const subcats = computed(() => categories.currentParent ? categories.visibleCategories : [])
+/* --- Sottocategorie ORDINATE: solo se c'è una root selezionata --- */
+const subcats = computed(() => {
+  const arr = categories.currentParent ? (categories.visibleCategories || []) : []
+  const toNum = (v) => {
+    const n = Number(v)
+    return Number.isFinite(n) ? n : Number.POSITIVE_INFINITY
+  }
+  const collator = new Intl.Collator(locale.value || 'it')
+  return arr.slice().sort((a, b) => {
+    const byOrder = toNum(a?.order) - toNum(b?.order)
+    if (byOrder !== 0) return byOrder
+    return collator.compare(labelOf(a), labelOf(b))
+  })
+})
 
 /* --- Interazioni --- */
-function onRootClick(cat){
+function onRootClick (cat) {
   categories.openRoot(cat)   // NON seleziono automaticamente il primo figlio
   open.value = true          // apro la sezione sub quando cambio root
 }
-function onSubcatClick(cat){
+function onSubcatClick (cat) {
   categories.selectCategory(cat)
 }
 </script>
@@ -53,7 +66,7 @@ function onSubcatClick(cat){
         :aria-expanded="String(open)"
         aria-controls="footer-subcats"
         dense rounded unelevated
-         text-color="white"
+        text-color="white"
         @click="toggleOpen"
       />
     </div>
@@ -61,7 +74,6 @@ function onSubcatClick(cat){
     <!-- Area SOTTOCATEGORIE (collassabile). Niente radici qui -->
     <q-slide-transition>
       <div v-show="open || !isMobile" id="footer-subcats" class="content-wrap">
-
         <div v-if="subcats.length" class="cats-wrap">
           <q-btn
             v-for="cat in subcats"
@@ -73,7 +85,10 @@ function onSubcatClick(cat){
         </div>
 
         <div v-else class="q-mt-xs text-grey-3">
-          {{ categories.currentParent ? (t('footer.noSubcategories') || 'Nessuna sottocategoria') : (t('footer.selectCategory') || 'Seleziona una categoria principale qui sotto') }}
+          {{ categories.currentParent
+            ? (t('footer.noSubcategories') || 'Nessuna sottocategoria')
+            : (t('footer.selectCategory') || 'Seleziona una categoria principale qui sotto')
+          }}
         </div>
       </div>
     </q-slide-transition>
@@ -86,11 +101,11 @@ function onSubcatClick(cat){
           :key="root._id"
           :label="labelOf(root)"
           class="root-btn"
-          :class="categories.currentParent?._id !== root._id? 'bg-primary' : 'bg-white'"
+          :class="categories.currentParent?._id !== root._id ? 'bg-primary' : 'bg-white'"
           flat
           :outline="categories.currentParent?._id !== root._id"
           :unelevated="true"
-          :text-color="categories.currentParent?._id !== root._id? 'white' : 'primary'"
+          :text-color="categories.currentParent?._id !== root._id ? 'white' : 'primary'"
           @click="onRootClick(root)"
         />
       </template>
