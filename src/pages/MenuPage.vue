@@ -18,6 +18,8 @@ import FooterNav from 'components/menu/FooterNav.vue'
 import ListProducts from 'components/menu/ListProducts.vue'
 import BrandSplash from 'components/menu/BrandSplash.vue'
 
+import { useSplashOnce } from 'src/utils/useSplashOnce'
+
 /* ===== Stores & basics ===== */
 const route = useRoute()
 const app = useAppStore()
@@ -41,7 +43,7 @@ watch(lang, (val) => { locale.value = val })
 const allergenOptions = computed(() => attrs.allergensFor(lang.value))
 
 /* ===== Colore brand + contrasto testo header ===== */
-const brandHex = computed(() => business.current?.brandColor || '#F1EEE6') // pietra leccese come fallback
+const brandHex = computed(() => business.current?.brandColor || '#F1EEE6')
 
 function hexToRgb (hex) {
   const h = String(hex || '').replace('#','')
@@ -63,8 +65,8 @@ const headerTextColor = computed(() => {
   return luminance(rgb) < 0.5 ? '#fff' : '#000'
 })
 
-/* ===== Splash: PRIMO frame, poi fade out 1s dopo ready ===== */
-const splash = ref(true) // lo splash è il primissimo frame
+/* ===== Splash: solo prima volta della sessione ===== */
+const { showSplash, hide } = useSplashOnce({ mode: 'session' }) // 'local' se vuoi persistente
 let hideTimer = null
 
 // pronto quando:
@@ -79,9 +81,10 @@ const bootReady = computed(() => {
 })
 
 watch(bootReady, (ready) => {
-  if (ready) {
+  // programma l'hide SOLO se lo splash è visibile (prima sessione)
+  if (ready && showSplash.value) {
     clearTimeout(hideTimer)
-    hideTimer = setTimeout(() => { splash.value = false }, 1000) // 1s prima di nascondere
+    hideTimer = setTimeout(() => { hide() }, 1000) // 1s di fade out
   }
 })
 
@@ -91,7 +94,6 @@ onBeforeUnmount(() => {
 
 /* ===== Boot sequence ===== */
 onMounted(async () => {
-  // splash è già true, quindi non vedrai il menu
   await Promise.all([ app.ensureCompanyLoaded(), attrs.fetchAllergens() ])
   await business.fetchByName(decodedName.value)
 
@@ -99,11 +101,16 @@ onMounted(async () => {
     await categories.fetchCategoriesForBusiness(business.current._id)
     categories.autoSelectFirstSubcategory() // trigger fetch prodotti
   }
+
+  // Se per qualsiasi motivo tutto è già pronto e lo splash è visibile, chiudi dopo 1s
+  if (bootReady.value && showSplash.value) {
+    hideTimer = setTimeout(() => { hide() }, 1000)
+  }
 })
 
+/* ===== Cambio businessName ===== */
 watch(() => route.params.businessName, async () => {
-  // tornando a cambiare locale, torna subito lo splash
-  splash.value = true
+  // NON riattiviamo lo splash: showSplash resta false dopo la prima volta
   clearTimeout(hideTimer)
 
   await Promise.all([ app.ensureCompanyLoaded(), attrs.fetchAllergens() ])
@@ -113,16 +120,21 @@ watch(() => route.params.businessName, async () => {
     await categories.fetchCategoriesForBusiness(business.current._id)
     categories.autoSelectFirstSubcategory()
   }
+
+  // Se, per caso, è la primissima visita della sessione e lo splash è ancora visibile:
+  if (bootReady.value && showSplash.value) {
+    hideTimer = setTimeout(() => { hide() }, 1000)
+  }
 })
 </script>
 
 <template>
   <q-page class="q-pa-none with-sticky-footer">
-    <!-- Splash: PRIMO frame garantito, colore brand appena disponibile -->
-    <BrandSplash :show="splash" :color="brandHex" />
+    <!-- Splash: mostrato solo alla prima apertura della sessione -->
+    <BrandSplash :show="showSplash" :color="brandHex" />
 
-    <!-- Contenuto: mostrato solo quando splash è andato via -->
-    <div v-show="!splash">
+    <!-- Contenuto: mostrato quando lo splash non è visibile -->
+    <div v-show="!showSplash">
       <div
         class="menu-header row items-center justify-between q-px-md q-pt-lg"
         :style="{ backgroundColor: brandHex, color: headerTextColor }"

@@ -1,9 +1,9 @@
-<!-- src/components/menu/ListProducts.vue -->
 <script setup>
 import { ref, computed, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useCategoriesStore } from 'stores/categories'
 import { useProductsStore } from 'stores/products'
+import { useRouter, useRoute } from 'vue-router'
 
 const props = defineProps({
   selectedAllergens: { type: Array, default: () => [] },
@@ -19,6 +19,8 @@ const { locale, t } = useI18n()
 const categories = useCategoriesStore()
 const products = useProductsStore()
 const view = ref(props.defaultView) // 'list' | 'cards'
+const router = useRouter()
+const route = useRoute()
 
 /* --- stato selezione sottocategoria --- */
 const hasSubcategory = computed(() => {
@@ -41,7 +43,26 @@ watch(
 /* --- helpers i18n & prezzi --- */
 function productName(p) {
   const loc = locale.value
-  return (p?.translations && p.translations[loc]) || p?.name || ''
+  // supporta sia translations.name[loc], sia translations[loc], con fallback a name
+  return (
+    p?.translations?.name?.[loc] ||
+    p?.translations?.[loc] ||
+    p?.name ||
+    ''
+  ).toString()
+}
+function productSubtitle(p) {
+  const loc = locale.value
+  // prova varie forme comuni per la descrizione (i18n e non)
+  const raw =
+    p?.translations?.description?.[loc] ??
+    p?.translationsDesc?.[loc] ??
+    p?.descriptions?.[loc] ??
+    p?.description ??
+    ''
+  const s = String(raw || '').trim()
+  // tronco per la lista
+  return s.length > 160 ? s.slice(0, 157) + '…' : s
 }
 function priceInt(n) {
   if (n == null || isNaN(n)) return null
@@ -64,7 +85,7 @@ function mainPrice(p) {
 function coverUrl(p, { w = 600, h = 800 } = {}) {
   const url = p?.cover?.url
   if (!url) return ''
-  // Sanity CDN supporta i parametri ?w=&h=&fit=&auto=
+  // es. Sanity CDN: ?w=&h=&fit=&auto=
   return `${url}?w=${w}&h=${h}&fit=crop&auto=format`
 }
 
@@ -82,6 +103,18 @@ const filtered = computed(() => {
 const showPriceHeader = computed(() =>
   filtered.value.some(p => (p?.priceGlass > 0) || (p?.priceBottle > 0))
 )
+
+/* --- navigazione --- */
+function goToProduct(p) {
+  if (!p?._id) return
+  router.push({
+    name: 'product-detail',
+    params: {
+      businessName: route.params.businessName,
+      id: p._id
+    }
+  })
+}
 </script>
 
 <template>
@@ -142,10 +175,17 @@ const showPriceHeader = computed(() =>
           <li
             v-for="p in filtered"
             :key="p._id"
-            class="product-row"
+            class="product-row clickable"
             role="listitem"
+            @click="goToProduct(p)"
+            @keyup.enter="goToProduct(p)"
+            tabindex="0"
+            :aria-label="productName(p)"
           >
-            <div class="name">{{ productName(p) }}</div>
+            <div class="name">
+              <div class="title">{{ productName(p) }}</div>
+              <div v-if="productSubtitle(p)" class="subtitle">{{ productSubtitle(p) }}</div>
+            </div>
 
             <div class="price-col">
               <span v-if="priceShape(p).glass !== null" class="price-num">
@@ -171,9 +211,13 @@ const showPriceHeader = computed(() =>
           <li
             v-for="p in filtered"
             :key="p._id"
-            class="product-card"
+            class="product-card clickable"
             :style="{ backgroundImage: coverUrl(p) ? `url('${coverUrl(p)}')` : undefined }"
             role="listitem"
+            @click="goToProduct(p)"
+            @keyup.enter="goToProduct(p)"
+            tabindex="0"
+            :aria-label="productName(p)"
           >
             <!-- fallback empty bg -->
             <div v-if="!coverUrl(p)" class="no-image"></div>
@@ -243,12 +287,24 @@ const showPriceHeader = computed(() =>
   display: flex; align-items: flex-start; gap: 28px;
   padding: 18px 0; border-bottom: 1px solid rgba(0,0,0,0.12);
 }
+.clickable{ cursor: pointer; }
+
 .name{
   flex: 1;
-  font-size: 1.08rem; line-height: 1.5rem;
-  font-weight: 560; letter-spacing: .1px;
   white-space: normal; overflow: visible; word-break: break-word;
 }
+.name .title{
+  font-size: 1.08rem; line-height: 1.5rem;
+  font-weight: 560; letter-spacing: .1px;
+  margin-bottom: 2px;
+}
+.name .subtitle{
+  font-size: .92rem; line-height: 1.25rem;
+  color: rgba(0,0,0,0.60);
+  max-height: 2.5rem; overflow: hidden;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+}
+
 .price-col{ display: flex; justify-content: flex-end; align-items: center; }
 .product-row .price-col:first-of-type{ width: 82px; } /* calice */
 .product-row .price-col:last-of-type{  width: 30px; } /* bottiglia/base */
@@ -260,10 +316,7 @@ const showPriceHeader = computed(() =>
 }
 
 /* ===== CARDS (flex) ===== */
-/* area cards larga 90% e centrata */
 .cards-wrap{ width: 90%; margin: 8px auto 0; }
-
-/* griglia di card con flex */
 .cards-grid{
   display: flex;
   flex-wrap: wrap;
@@ -271,8 +324,6 @@ const showPriceHeader = computed(() =>
   gap: 20px;
   padding: 0;
 }
-
-/* card rettangolari orizzontali */
 .product-card{
   position: relative;
   width: clamp(220px, 90vw, 400px);
@@ -284,14 +335,12 @@ const showPriceHeader = computed(() =>
   background-color: #f1f1f1;
   box-shadow: 0 1px 3px rgba(0,0,0,.08);
 }
-
 .product-card .no-image{
   position: absolute; inset: 0;
   background: repeating-linear-gradient(
     45deg, #ececec, #ececec 10px, #e2e2e2 10px, #e2e2e2 20px
   );
 }
-
 .card-footer{
   position: absolute; left: 0; right: 0; bottom: 0;
   padding: 8px 10px;
@@ -317,5 +366,3 @@ const showPriceHeader = computed(() =>
   .product-card{ width: clamp(260px, 24vw, 420px); }
 }
 </style>
-
-
