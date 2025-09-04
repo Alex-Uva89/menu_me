@@ -15,8 +15,6 @@ const routes = [
       },
       { path: ':businessName', name: 'business', component: BusinessPage },
       { path: ':businessName/Menu', name: 'businessMenu', component: MenuPage },
-
-      // Dettaglio prodotto (immagine grande + info)
       {
         path: ':businessName/prodotto/:id',
         name: 'product-detail',
