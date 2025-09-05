@@ -38,6 +38,14 @@ export const useCategoriesStore = defineStore('categories', () => {
     )
   }
 
+  function openRootAndSelectFirst(cat) {
+    openRoot(cat)
+    const kids = getChildrenOf(cat._id)
+    if (kids.length) {
+      selectCategory(kids[0])
+    }
+  }
+
   const visibleCategories = computed(() => {
     if (!currentParent.value) return roots.value
     return getChildrenOf(currentParent.value._id)
@@ -85,6 +93,7 @@ export const useCategoriesStore = defineStore('categories', () => {
     // actions
     fetchCategoriesForBusiness, getChildrenOf,
     openRoot, selectCategory, backToRoots,
-    autoSelectFirstSubcategory
+    autoSelectFirstSubcategory,
+    openRootAndSelectFirst
   }
 })

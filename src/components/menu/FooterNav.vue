@@ -39,9 +39,10 @@ const subcats = computed(() => {
 })
 
 /* --- Interazioni --- */
-function onRootClick (cat) {
-  categories.openRoot(cat)   // NON seleziono automaticamente il primo figlio
+function onRootClick(cat) {
+  categories.openRootAndSelectFirst(cat)
 }
+
 function onSubcatClick (cat) {
   categories.selectCategory(cat)
 }
