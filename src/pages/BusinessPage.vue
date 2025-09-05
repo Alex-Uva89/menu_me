@@ -152,7 +152,8 @@ import { computed, onMounted, watch, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useBusinessStore } from 'stores/business'
 import { useAppStore } from 'stores/app'
-import { isOpenComputed, statusLabel, logOpeningDiagnostics } from 'src/utils/opening'
+// ⬇️ reintrodotto todayLabel per fallback
+import { isOpenComputed, statusLabel, todayLabel, logOpeningDiagnostics } from 'src/utils/opening'
 
 const route = useRoute()
 const router = useRouter()
@@ -218,16 +219,34 @@ function initials(str = '') {
   return parts.map(p => p[0].toUpperCase()).join('') || 'ME'
 }
 
-// ====== Orari oggi: due righe (Giorno / Sera) ======
-const todayDayText   = computed(() => extractTodayPeriods(current.value).day)
-const todayNightText = computed(() => extractTodayPeriods(current.value).night)
+/* =========================
+   Orari di oggi (2 righe)
+   ========================= */
+
+const todayDayText   = computed(() => getTodayPeriods(current.value).day)
+const todayNightText = computed(() => getTodayPeriods(current.value).night)
 const hasAnyTodayHours = computed(() => Boolean(todayDayText.value || todayNightText.value))
 
-function extractTodayPeriods(biz) {
-  // ritorna { day: '09:00–13:00 · 15:00–18:00', night: '19:30–23:30' } o stringhe vuote
+function getTodayPeriods(biz) {
   if (!biz) return { day: '', night: '' }
 
-  // 1) Trova chiave del giorno corrente
+  // 1) prova a leggere strutturato
+  const structured = extractStructuredToday(biz)
+  if (structured.day || structured.night) return structured
+
+  // 2) fallback: parsare la stringa di todayLabel(biz)
+  const raw = safeTodayLabel(biz) // es: "09:00-13:00 · 15:00-18:00 · 19:30-23:30"
+  if (!raw) return { day: '', night: '' }
+
+  const { dayRanges, nightRanges } = parseRangesFromText(raw)
+  return {
+    day: joinRanges(dayRanges),
+    night: joinRanges(nightRanges)
+  }
+}
+
+function extractStructuredToday(biz) {
+  // supporta diverse forme: hours/opening/schedule/openingTimes
   const DOW_SHORT = ['sun','mon','tue','wed','thu','fri','sat']
   const DOW_LONG  = ['sunday','monday','tuesday','wednesday','thursday','friday','saturday']
   const DOW_IT    = ['domenica','lunedì','martedì','mercoledì','giovedì','venerdì','sabato']
@@ -236,42 +255,37 @@ function extractTodayPeriods(biz) {
   const keysToday = new Set([DOW_SHORT[idx], DOW_LONG[idx], DOW_IT[idx], DOW_IT_S[idx]]
     .filter(Boolean).map(k => String(k).toLowerCase()))
 
-  // 2) Cerca il contenitore orari più probabile
   const roots = ['opening','hours','schedule','openingTimes','opening_times']
   let dayObj = null
+
   for (const r of roots) {
     const base = biz?.[r]
     if (!base) continue
-    // a) oggetto con chiavi per giorno
+
     if (typeof base === 'object' && !Array.isArray(base)) {
       const foundKey = Object.keys(base).find(k => keysToday.has(String(k).toLowerCase()))
       if (foundKey) { dayObj = base[foundKey]; break }
     }
-    // b) array di segmenti { dayOfWeek, period, start, end } ecc.
     if (Array.isArray(base)) {
-      const segments = base.filter(seg => matchDay(seg?.dayOfWeek, keysToday))
-      if (segments?.length) { dayObj = segments; break }
+      const segs = base.filter(seg => matchDay(seg?.dayOfWeek, keysToday))
+      if (segs?.length) { dayObj = segs; break }
     }
   }
 
-  // 3) Estrai fasce Giorno/Sera da strutture comuni
   const dayKeys   = ['day','giorno','pranzo','lunch','mattina','daytime']
   const nightKeys = ['night','notte','sera','dinner','evening']
+
   let dayRanges = []
   let nightRanges = []
 
   if (dayObj) {
     if (Array.isArray(dayObj)) {
-      // forma: array di segmenti { period:'day'|'night', start,end } o { kind }
       const tag = (s) => String(s?.period || s?.kind || '').toLowerCase()
       dayRanges   = normalizeRanges(dayObj.filter(s => dayKeys.includes(tag(s))))
       nightRanges = normalizeRanges(dayObj.filter(s => nightKeys.includes(tag(s))))
     } else if (typeof dayObj === 'object') {
-      // forma: { day:[...], night:[...] } o simili
-      for (const k of dayKeys)   if (dayObj[k])   { dayRanges   = normalizeRanges(dayObj[k]); break }
-      for (const k of nightKeys) if (dayObj[k])   { nightRanges = normalizeRanges(dayObj[k]); break }
-
-      // fallback: ranges/slots con tag period/kind
+      for (const k of dayKeys)   if (dayObj[k]) { dayRanges   = normalizeRanges(dayObj[k]); break }
+      for (const k of nightKeys) if (dayObj[k]) { nightRanges = normalizeRanges(dayObj[k]); break }
       if (!dayRanges.length && !nightRanges.length) {
         const ranges = dayObj.ranges || dayObj.slots
         if (ranges) {
@@ -284,16 +298,12 @@ function extractTodayPeriods(biz) {
     }
   }
 
-  return {
-    day:   joinRanges(dayRanges),
-    night: joinRanges(nightRanges)
-  }
+  return { day: joinRanges(dayRanges), night: joinRanges(nightRanges) }
 }
 
 function matchDay(dayOfWeek, keysToday) {
   if (!dayOfWeek) return false
   const v = String(dayOfWeek).toLowerCase()
-  // gestisce numeri (0-6 = Sun-Sat) e stringhe
   if (/^\d+$/.test(v)) {
     const n = Number(v)
     const DOW_SHORT = ['sun','mon','tue','wed','thu','fri','sat']
@@ -313,17 +323,65 @@ function normalizeRanges(input) {
       if (typeof r === 'string') {
         const s = r.replace('–','-').trim()
         const [a,b] = s.split('-').map(x => x?.trim()).filter(Boolean)
-        return (a && b) ? `${a}–${b}` : null
+        return (a && b) ? `${fmt(a)}–${fmt(b)}` : null
       }
       const a = r.start || r.from || r.open || r.begin
       const b = r.end   || r.to   || r.close|| r.finish
-      return (a && b) ? `${a}–${b}` : null
+      return (a && b) ? `${fmt(a)}–${fmt(b)}` : null
     })
     .filter(Boolean)
 }
 
 function joinRanges(ranges) {
   return (ranges && ranges.length) ? ranges.join(' · ') : ''
+}
+
+/* ===== Fallback parsando una stringa ===== */
+
+function safeTodayLabel(biz) {
+  try {
+    const s = todayLabel(biz) || ''
+    return String(s).trim()
+  } catch {
+    return ''
+  }
+}
+
+function parseRangesFromText(text) {
+  // Estrae tutti gli intervalli orari presenti nel testo e li classifica in day/night
+  // Supporto formati: 9-13, 09:00-13, 09:00-13:00, 19.30-23, separatore - o –
+  const re = /(\d{1,2})(?::|\.|)?(\d{2})?\s*[–-]\s*(\d{1,2})(?::|\.|)?(\d{2})?/g
+  const DAY_THRESHOLD_MINS = 18 * 60
+
+  const dayRanges = []
+  const nightRanges = []
+
+  let m
+  while ((m = re.exec(text)) !== null) {
+    const h1 = parseInt(m[1], 10)
+    const m1 = m[2] ? parseInt(m[2], 10) : 0
+    const h2 = parseInt(m[3], 10)
+    const m2 = m[4] ? parseInt(m[4], 10) : 0
+
+    if (Number.isNaN(h1) || Number.isNaN(h2)) continue
+    const startMins = h1 * 60 + m1
+    const rangeStr = `${pad(h1)}:${pad(m1)}–${pad(h2)}:${pad(m2)}`
+    if (startMins < DAY_THRESHOLD_MINS) dayRanges.push(rangeStr)
+    else nightRanges.push(rangeStr)
+  }
+
+  return { dayRanges, nightRanges }
+}
+
+function pad(n) { return String(n).padStart(2, '0') }
+function fmt(v) {
+  // normalizza '9', '9:0', '9.00', '09' -> '09:00' ; '09:30' resta
+  const s = String(v).trim()
+  const m = s.match(/^(\d{1,2})(?::|\.|)?(\d{0,2})$/)
+  if (!m) return s
+  const hh = pad(parseInt(m[1] || '0', 10))
+  const mm = m[2] ? pad(parseInt(m[2] || '0', 10)) : '00'
+  return `${hh}:${mm}`
 }
 
 async function load() {
@@ -334,7 +392,9 @@ async function load() {
 
   if (import.meta.env.DEV && current.value) {
     logOpeningDiagnostics(current.value)
-    others.value.forEach(o => logOpeningDiagnostics(o))
+    if (Array.isArray(others.value)) {
+      others.value.forEach(o => logOpeningDiagnostics(o))
+    }
   }
 }
 
