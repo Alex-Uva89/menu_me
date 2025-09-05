@@ -24,10 +24,16 @@
               </q-badge>
             </div>
 
-            <!-- Orari di OGGI -->
-            <div class="text-body2 text-white q-mt-xs opacity-85">
-              <q-icon name="schedule" size="16px" class="q-mr-xs" />
-              {{ todayText }}
+            <!-- Orari OGGI: due righe (Giorno / Sera) solo se esistono -->
+            <div v-if="hasAnyTodayHours" class="q-mt-xs hours-stack">
+              <div v-if="todayDayText" class="hours-line text-white opacity-90">
+                <q-icon name="light_mode" size="16px" class="q-mr-xs" />
+                <span class="mono">{{ todayDayText }}</span>
+              </div>
+              <div v-if="todayNightText" class="hours-line text-white opacity-90">
+                <q-icon name="nightlight" size="16px" class="q-mr-xs" />
+                <span class="mono">{{ todayNightText }}</span>
+              </div>
             </div>
           </div>
 
@@ -43,19 +49,25 @@
         <!-- Mobile: sfondo + pannello orari + CTA -->
         <div class="h-full lt-md mobile-hero">
           <div
-            v-if="current"
+            v-if="current && hasAnyTodayHours"
             class="mobile-hours"
             role="status"
             aria-live="polite"
           >
-            <div class="row items-center">
+            <div class="row items-center q-mb-xs">
               <q-badge :color="isOpenComputed(current) ? 'positive' : 'negative'" outline>
                 {{ statusLabel(current) }}
               </q-badge>
-              <div class="hours-text ellipsis">
-                <q-icon name="schedule" size="16px" class="q-mr-xs" />
-                {{ todayText }}
-              </div>
+            </div>
+
+            <div v-if="todayDayText" class="row items-center q-mb-xs">
+              <q-icon name="light_mode" size="16px" class="q-mr-xs" />
+              <div class="hours-text mono">{{ todayDayText }}</div>
+            </div>
+
+            <div v-if="todayNightText" class="row items-center">
+              <q-icon name="nightlight" size="16px" class="q-mr-xs" />
+              <div class="hours-text mono">{{ todayNightText }}</div>
             </div>
           </div>
 
@@ -140,7 +152,7 @@ import { computed, onMounted, watch, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useBusinessStore } from 'stores/business'
 import { useAppStore } from 'stores/app'
-import { isOpenComputed, statusLabel, todayLabel, logOpeningDiagnostics } from 'src/utils/opening'
+import { isOpenComputed, statusLabel, logOpeningDiagnostics } from 'src/utils/opening'
 
 const route = useRoute()
 const router = useRouter()
@@ -165,7 +177,6 @@ function goToMenu() {
 }
 
 const currentLogo = computed(() => current.value?.logoUrl || null)
-const todayText = computed(() => todayLabel(current.value))
 
 const heroStyle = computed(() => {
   const base = `var(--q-primary)`
@@ -205,6 +216,114 @@ function bgStyleFor(b) {
 function initials(str = '') {
   const parts = String(str).trim().split(/\s+/).slice(0, 2)
   return parts.map(p => p[0].toUpperCase()).join('') || 'ME'
+}
+
+// ====== Orari oggi: due righe (Giorno / Sera) ======
+const todayDayText   = computed(() => extractTodayPeriods(current.value).day)
+const todayNightText = computed(() => extractTodayPeriods(current.value).night)
+const hasAnyTodayHours = computed(() => Boolean(todayDayText.value || todayNightText.value))
+
+function extractTodayPeriods(biz) {
+  // ritorna { day: '09:00–13:00 · 15:00–18:00', night: '19:30–23:30' } o stringhe vuote
+  if (!biz) return { day: '', night: '' }
+
+  // 1) Trova chiave del giorno corrente
+  const DOW_SHORT = ['sun','mon','tue','wed','thu','fri','sat']
+  const DOW_LONG  = ['sunday','monday','tuesday','wednesday','thursday','friday','saturday']
+  const DOW_IT    = ['domenica','lunedì','martedì','mercoledì','giovedì','venerdì','sabato']
+  const DOW_IT_S  = ['dom','lun','mar','mer','gio','ven','sab']
+  const idx = new Date().getDay()
+  const keysToday = new Set([DOW_SHORT[idx], DOW_LONG[idx], DOW_IT[idx], DOW_IT_S[idx]]
+    .filter(Boolean).map(k => String(k).toLowerCase()))
+
+  // 2) Cerca il contenitore orari più probabile
+  const roots = ['opening','hours','schedule','openingTimes','opening_times']
+  let dayObj = null
+  for (const r of roots) {
+    const base = biz?.[r]
+    if (!base) continue
+    // a) oggetto con chiavi per giorno
+    if (typeof base === 'object' && !Array.isArray(base)) {
+      const foundKey = Object.keys(base).find(k => keysToday.has(String(k).toLowerCase()))
+      if (foundKey) { dayObj = base[foundKey]; break }
+    }
+    // b) array di segmenti { dayOfWeek, period, start, end } ecc.
+    if (Array.isArray(base)) {
+      const segments = base.filter(seg => matchDay(seg?.dayOfWeek, keysToday))
+      if (segments?.length) { dayObj = segments; break }
+    }
+  }
+
+  // 3) Estrai fasce Giorno/Sera da strutture comuni
+  const dayKeys   = ['day','giorno','pranzo','lunch','mattina','daytime']
+  const nightKeys = ['night','notte','sera','dinner','evening']
+  let dayRanges = []
+  let nightRanges = []
+
+  if (dayObj) {
+    if (Array.isArray(dayObj)) {
+      // forma: array di segmenti { period:'day'|'night', start,end } o { kind }
+      const tag = (s) => String(s?.period || s?.kind || '').toLowerCase()
+      dayRanges   = normalizeRanges(dayObj.filter(s => dayKeys.includes(tag(s))))
+      nightRanges = normalizeRanges(dayObj.filter(s => nightKeys.includes(tag(s))))
+    } else if (typeof dayObj === 'object') {
+      // forma: { day:[...], night:[...] } o simili
+      for (const k of dayKeys)   if (dayObj[k])   { dayRanges   = normalizeRanges(dayObj[k]); break }
+      for (const k of nightKeys) if (dayObj[k])   { nightRanges = normalizeRanges(dayObj[k]); break }
+
+      // fallback: ranges/slots con tag period/kind
+      if (!dayRanges.length && !nightRanges.length) {
+        const ranges = dayObj.ranges || dayObj.slots
+        if (ranges) {
+          const tagged = Array.isArray(ranges) ? ranges : [ranges]
+          const tag = (s) => String(s?.period || s?.kind || '').toLowerCase()
+          dayRanges   = normalizeRanges(tagged.filter(s => dayKeys.includes(tag(s))))
+          nightRanges = normalizeRanges(tagged.filter(s => nightKeys.includes(tag(s))))
+        }
+      }
+    }
+  }
+
+  return {
+    day:   joinRanges(dayRanges),
+    night: joinRanges(nightRanges)
+  }
+}
+
+function matchDay(dayOfWeek, keysToday) {
+  if (!dayOfWeek) return false
+  const v = String(dayOfWeek).toLowerCase()
+  // gestisce numeri (0-6 = Sun-Sat) e stringhe
+  if (/^\d+$/.test(v)) {
+    const n = Number(v)
+    const DOW_SHORT = ['sun','mon','tue','wed','thu','fri','sat']
+    const DOW_LONG  = ['sunday','monday','tuesday','wednesday','thursday','friday','saturday']
+    return keysToday.has(DOW_SHORT[n]) || keysToday.has(DOW_LONG[n])
+  }
+  return keysToday.has(v)
+}
+
+function normalizeRanges(input) {
+  // accetta: '09:00-13:00' | {start,end} | [{start,end}] | ['09:00-13:00', ...]
+  if (!input) return []
+  const arr = Array.isArray(input) ? input : [input]
+  return arr
+    .map(r => {
+      if (!r) return null
+      if (typeof r === 'string') {
+        const s = r.replace('–','-').trim()
+        const [a,b] = s.split('-').map(x => x?.trim()).filter(Boolean)
+        return (a && b) ? `${a}–${b}` : null
+      }
+      const a = r.start || r.from || r.open || r.begin
+      const b = r.end   || r.to   || r.close|| r.finish
+      return (a && b) ? `${a}–${b}` : null
+    })
+    .filter(Boolean)
+}
+
+function joinRanges(ranges) {
+  return (ranges && ranges.length) ? ranges.join(' · ') : ''
 }
 
 async function load() {
@@ -311,6 +430,11 @@ watch(() => route.params.businessName, load)
 /* fade */
 .fade-enter-active, .fade-leave-active { transition: opacity .12s ease; }
 .fade-enter-from, .fade-leave-to { opacity: 0; }
+
+/* Orari in hero */
+.hours-stack .hours-line { display: flex; align-items: center; line-height: 1.2; }
+.hours-stack .hours-line + .hours-line { margin-top: 2px; }
+.mono { font-variant-numeric: tabular-nums; letter-spacing: .2px; }
 
 /* Tweak padding hero su schermi piccoli */
 @media (max-width: 599.98px) {
