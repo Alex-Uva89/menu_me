@@ -1,9 +1,59 @@
 [build]
-  command = "npm run build"
-  publish = "dist/spa"
+  command = "npm run build:pwa" 
+  publish = "dist/pwa"
 
+# Proxy al backend (la tua regola attuale)
 [[redirects]]
   from = "/public/*"
   to = "https://backend-rough-snow-2736.fly.dev/public/:splat"
   status = 200
   force = true
+
+# NON far catturare service worker/manifest dal fallback SPA
+[[redirects]]
+  from = "/service-worker.js"
+  to = "/service-worker.js"
+  status = 200
+
+[[redirects]]
+  from = "/manifest.json"
+  to = "/manifest.json"
+  status = 200
+
+# (opzionale) se usi .webmanifest
+[[redirects]]
+  from = "/manifest.webmanifest"
+  to = "/manifest.webmanifest"
+  status = 200
+
+# Catch-all SPA fallback
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+# Intestazioni consigliate
+
+# Il service worker NON deve essere messo in cache aggressiva
+[[headers]]
+  for = "/service-worker.js"
+  [headers.values]
+    Cache-Control = "no-cache, no-store, must-revalidate"
+
+# Manifest: tipo corretto (alcuni browser sono pignoli)
+[[headers]]
+  for = "/manifest.json"
+  [headers.values]
+    Content-Type = "application/manifest+json; charset=utf-8"
+
+# Icone PWA: cache lunga
+[[headers]]
+  for = "/icons/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+# Asset statici fingerprinted: cache lunga (adatta il path se diverso)
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"

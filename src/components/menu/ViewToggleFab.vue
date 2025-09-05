@@ -40,7 +40,7 @@ const isCards = computed(() => props.view === 'cards')
         :aria-pressed="isList"
         :aria-label="listLabel"
       >
-        <q-tooltip v-if="showTooltips" anchor="top middle" self="bottom middle">
+        <q-tooltip v-if="showTooltips" anchor="bottom middle" self="top middle">
           {{ listLabel }}
         </q-tooltip>
       </q-btn>
@@ -58,7 +58,7 @@ const isCards = computed(() => props.view === 'cards')
         :aria-pressed="isCards"
         :aria-label="cardsLabel"
       >
-        <q-tooltip v-if="showTooltips" anchor="top middle" self="bottom middle">
+        <q-tooltip v-if="showTooltips" anchor="bottom middle" self="top middle">
           {{ cardsLabel }}
         </q-tooltip>
       </q-btn>

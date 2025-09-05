@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted, onBeforeUnmount, watch, nextTick } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 
@@ -86,22 +86,6 @@ watch(bootReady, (ready) => {
 
 onBeforeUnmount(() => { clearTimeout(hideTimer) })
 
-/* ===== Offset FAB fisso (bottom-right, sopra al footer) ===== */
-const fabBottom = ref(120) // px sopra al footer; regola se il footer è più alto
-
-function computeFabBottom () {
-  // puoi mettere logica extra qui (safe-area, ecc.)
-  fabBottom.value = 120
-}
-function setupFab () {
-  computeFabBottom()
-  window.addEventListener('resize', computeFabBottom, { passive: true })
-}
-function cleanupFab () {
-  window.removeEventListener('resize', computeFabBottom)
-}
-
-
 /* ===== Boot sequence ===== */
 onMounted(async () => {
   await Promise.all([ app.ensureCompanyLoaded(), attrs.fetchAllergens() ])
@@ -112,17 +96,11 @@ onMounted(async () => {
     categories.autoSelectFirstSubcategory()
   }
 
-  await nextTick()
-  setupFab()
-
   if (bootReady.value && showSplash.value) {
     hideTimer = setTimeout(() => { hide() }, 1000)
   }
 })
 
-onBeforeUnmount(() => {
-  cleanupFab()
-})
 
 /* ===== Cambio businessName ===== */
 watch(() => route.params.businessName, async () => {
@@ -135,9 +113,6 @@ watch(() => route.params.businessName, async () => {
     await categories.fetchCategoriesForBusiness(business.current._id)
     categories.autoSelectFirstSubcategory()
   }
-
-  await nextTick()
-  computeFabBottom()
 
   if (bootReady.value && showSplash.value) {
     hideTimer = setTimeout(() => { hide() }, 1000)
@@ -179,7 +154,7 @@ watch(() => route.params.businessName, async () => {
       </div>
 
       <!-- FAB fissa (non si muove allo scroll) -->
-      <q-page-sticky position="bottom-right" :offset="[16, fabBottom]" class="fab-fixed">
+      <q-page-sticky position="top-left" :offset="[16, 85]" class="fab-fixed">
         <ViewToggleFab v-model:view="view" />
       </q-page-sticky>
 

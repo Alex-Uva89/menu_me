@@ -114,7 +114,7 @@ function goToProduct(p) {
 </script>
 
 <template>
-  <div class="menu-list q-pt-md q-pb-xl">
+  <div class="menu-list q-pt-md q-pb-xl q-mt-lg">
     <!-- stato senza sottocategoria -->
     <div v-if="!hasSubcategory && products.items.length === 0" class="placeholder q-px-md">
       {{ t('selectCategory') }}
@@ -153,6 +153,7 @@ function goToProduct(p) {
         </div>
 
         <ul class="product-list" role="list">
+          {{ console.log('products', filtered) }}
           <li
             v-for="p in filtered"
             :key="p._id"
@@ -202,9 +203,9 @@ function goToProduct(p) {
             <!-- Immagine non tagliata: fit contain -->
             <q-img
               v-if="coverUrl(p)"
-              :src="coverUrl(p, { w: 1200, h: 800, fit: 'max' })"
+              :src="coverUrl(p, { w: 1200, h: 800, fit: 'crop' })"
               :ratio="16/9"
-              fit="contain"
+              fit="cover"
               no-native-menu
               class="card-img"
               :alt="productName(p)"
@@ -304,7 +305,8 @@ function goToProduct(p) {
 .card-img{
   position: absolute; inset: 0;
   width: 100%; height: 100%;
-  object-fit: contain; /* NO crop */
+  object-fit: cover;
+  object-position: center;
   background: transparent;
 }
 .no-image{

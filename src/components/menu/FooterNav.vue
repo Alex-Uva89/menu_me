@@ -1,12 +1,10 @@
 <!-- src/components/menu/FooterNav.vue -->
 <script setup>
-import { computed, ref, watchEffect } from 'vue'
-import { useQuasar } from 'quasar'
+import { computed } from 'vue'
 import { useCategoriesStore } from 'stores/categories'
 import { useBusinessStore } from 'stores/business'
 import { useI18n } from 'vue-i18n'
 
-const $q = useQuasar()
 const categories = useCategoriesStore()
 const business = useBusinessStore()
 const { t, locale } = useI18n()
@@ -15,12 +13,6 @@ const { t, locale } = useI18n()
 const bgColor = computed(
   () => business.current?.brandColor || 'var(--q-primary, var(--leccese, #f1eee6))'
 )
-
-/* --- Mobile-first: il toggle controlla SOLO le subcats --- */
-const isMobile = computed(() => $q.screen.lt.md)
-const open = ref(true)
-watchEffect(() => { open.value = isMobile.value ? false : true })
-function toggleOpen () { open.value = !open.value }
 
 /* --- Label localizzata --- */
 function labelOf (cat) {
@@ -49,7 +41,6 @@ const subcats = computed(() => {
 /* --- Interazioni --- */
 function onRootClick (cat) {
   categories.openRoot(cat)   // NON seleziono automaticamente il primo figlio
-  open.value = true          // apro la sezione sub quando cambio root
 }
 function onSubcatClick (cat) {
   categories.selectCategory(cat)
@@ -58,40 +49,25 @@ function onSubcatClick (cat) {
 
 <template>
   <footer class="menu-footer q-pa-sm" :style="{ background: bgColor }">
-    <!-- Toggle lungo -->
-    <div class="footer-bar">
-      <q-btn
-        class="toggle-btn"
-        :icon-right="open ? 'expand_less' : 'expand_more'"
-        :aria-expanded="String(open)"
-        aria-controls="footer-subcats"
-        dense rounded unelevated
-        text-color="white"
-        @click="toggleOpen"
-      />
-    </div>
-
-    <!-- Area SOTTOCATEGORIE (collassabile). Niente radici qui -->
-    <q-slide-transition>
-      <div v-show="open || !isMobile" id="footer-subcats" class="content-wrap">
-        <div v-if="subcats.length" class="cats-wrap">
-          <q-btn
-            v-for="cat in subcats"
-            :key="cat._id"
-            :label="labelOf(cat)"
-            flat class="cat-btn"
-            @click="onSubcatClick(cat)"
-          />
-        </div>
-
-        <div v-else class="q-mt-xs text-grey-3">
-          {{ categories.currentParent
-            ? (t('footer.noSubcategories') || 'Nessuna sottocategoria')
-            : (t('footer.selectCategory') || 'Seleziona una categoria principale qui sotto')
-          }}
-        </div>
+    <!-- Area SOTTOCATEGORIE (sempre visibile) -->
+    <div id="footer-subcats" class="content-wrap">
+      <div v-if="subcats.length" class="cats-wrap">
+        <q-btn
+          v-for="cat in subcats"
+          :key="cat._id"
+          :label="labelOf(cat)"
+          flat class="cat-btn"
+          @click="onSubcatClick(cat)"
+        />
       </div>
-    </q-slide-transition>
+
+      <div v-else class="q-mt-xs text-grey-3">
+        {{ categories.currentParent
+          ? (t('footer.noSubcategories') || 'Nessuna sottocategoria')
+          : (t('footer.selectCategory') || 'Seleziona una categoria principale qui sotto')
+        }}
+      </div>
+    </div>
 
     <!-- RADICI: SEMPRE VISIBILI IN BASSO -->
     <div class="roots-wrap" role="tablist" aria-label="Categorie principali">
@@ -132,15 +108,6 @@ function onSubcatClick (cat) {
   padding-right: max(env(safe-area-inset-right), 8px);
 }
 
-/* Toggle lungo */
-.footer-bar{ display:flex; justify-content:center; align-items:center; }
-.toggle-btn{
-  width: 100%;
-  min-height: 20px;
-  padding: 0 16px;
-  font-weight: 700;
-}
-
 /* Area subcategorie */
 .content-wrap{ margin-top: .5rem; }
 .cats-wrap{
@@ -168,7 +135,6 @@ function onSubcatClick (cat) {
   overflow-x: auto; -webkit-overflow-scrolling: touch;
   padding-top: .5rem;
   border-top: 1px solid rgba(255,255,255,0.25);
-  display: flex;
   justify-content: center;
 }
 .root-btn{
