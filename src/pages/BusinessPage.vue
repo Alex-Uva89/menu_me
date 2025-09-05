@@ -48,7 +48,7 @@
             role="status"
             aria-live="polite"
           >
-            <div class="row items-center no-wrap">
+            <div class="row items-center">
               <q-badge :color="isOpenComputed(current) ? 'positive' : 'negative'" outline>
                 {{ statusLabel(current) }}
               </q-badge>
@@ -257,9 +257,9 @@ watch(() => route.params.businessName, load)
   margin-left: 10px;
   font-size: 14px;
   line-height: 1;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
 }
 
 .mobile-cta {
