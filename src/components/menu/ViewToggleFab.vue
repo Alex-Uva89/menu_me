@@ -69,7 +69,6 @@ const isCards = computed(() => props.view === 'cards')
 <style scoped>
 .floating-toggle{
   border-radius: 9999px;
-  box-shadow: 0 0px 10px rgba(255, 255, 255, 0.562);
   background-color: rgb(255, 255, 255);
 }
 </style>
