@@ -119,7 +119,7 @@ const headerFallback = computed(() => app.companyTitle || ' ')
 
 /* Logo header: dimensione comoda in toolbar */
 .header-logo{
-  height: 90px;        /* alza/abbassa a gusto: 24–32 */
+  height: 80px;        /* alza/abbassa a gusto: 24–32 */
   max-width: 200px;
   object-fit: contain;
   filter: drop-shadow(0 1px 1px rgba(0,0,0,.06));
