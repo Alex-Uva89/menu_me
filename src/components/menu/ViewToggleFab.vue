@@ -32,7 +32,7 @@ const isCards = computed(() => props.view === 'cards')
         :size="size"
         round
         icon="list"
-        :color="isList ? color : 'grey-4'"
+        :color="isList ? color : 'white-9'"
         :text-color="isList ? textColor : 'grey-8'"
         :flat="!isList"
         :outline="!isList"
@@ -68,8 +68,8 @@ const isCards = computed(() => props.view === 'cards')
 
 <style scoped>
 .floating-toggle{
-  backdrop-filter: blur(8px);
   border-radius: 9999px;
-  box-shadow: 0 8px 22px rgba(0,0,0,.18);
+  box-shadow: 0 0px 10px rgba(255, 255, 255, 0.562);
+  background-color: rgb(255, 255, 255);
 }
 </style>

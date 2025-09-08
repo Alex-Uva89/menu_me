@@ -10,7 +10,6 @@ import { useCategoriesStore } from 'stores/categories'
 import { useBusinessStore } from 'stores/business'
 import { useProductsStore } from 'stores/products'
 
-import LanguageButton from 'components/menu/LanguageButton.vue'
 import AllergenButton from 'components/menu/AllergenButton.vue'
 import CategoryTitle from 'components/menu/CategoryTitle.vue'
 import FooterNav from 'components/menu/FooterNav.vue'
@@ -29,7 +28,7 @@ const categories = useCategoriesStore()
 const business = useBusinessStore()
 const products = useProductsStore()
 
-const { locale, t } = useI18n()
+const { locale } = useI18n()
 const allergenSelected = ref([])
 const view = ref('list') // 'list' | 'cards'
 
@@ -132,12 +131,7 @@ watch(() => route.params.businessName, async () => {
         :style="{ backgroundColor: brandHex, color: headerTextColor }"
       >
         <div class="col-auto q-mb-md">
-          <LanguageButton
-            :options="[
-              { code: 'it', label: t('availableLanguages.it'), flag: '/flags/it.png' },
-              { code: 'en', label: t('availableLanguages.en'), flag: '/flags/gb.png' }
-            ]"
-          />
+          <ViewToggleFab v-model:view="view" />
         </div>
 
         <div class="col text-center">
@@ -152,11 +146,6 @@ watch(() => route.params.businessName, async () => {
           />
         </div>
       </div>
-
-      <!-- FAB fissa (non si muove allo scroll) -->
-      <q-page-sticky position="top-left" :offset="[16, 85]" class="fab-fixed">
-        <ViewToggleFab v-model:view="view" />
-      </q-page-sticky>
 
       <!-- Lista prodotti controllata dalla pagina -->
       <ListProducts

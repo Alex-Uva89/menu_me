@@ -114,7 +114,7 @@ function goToProduct(p) {
 </script>
 
 <template>
-  <div class="menu-list q-pt-md q-pb-xl q-mt-lg">
+  <div class="menu-list q-pt-md q-pb-xl">
     <!-- stato senza sottocategoria -->
     <div v-if="!hasSubcategory && products.items.length === 0" class="placeholder q-px-md">
       {{ t('selectCategory') }}

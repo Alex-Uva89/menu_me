@@ -2,7 +2,7 @@
 <template>
   <q-layout view="lHh Lpr lFf">
     <q-header elevated :style="headerStyle" class="text-white">
-      <q-toolbar>
+      <q-toolbar class="row justify-between">
         <q-btn
           v-if="canGoBack"
           flat round dense
@@ -31,7 +31,7 @@
         </a>
 
         <!-- Spacer destro per bilanciare il back -->
-        <div style="width:40px;"></div>
+        <LanguageButton />
       </q-toolbar>
     </q-header>
 
@@ -47,6 +47,8 @@ import { useRoute, useRouter } from 'vue-router'
 import { useAppStore } from 'stores/app'
 import { useNavStore } from 'stores/nav'
 import { useBusinessStore } from 'stores/business'
+
+import LanguageButton from 'src/components/menu/LanguageButton.vue'
 
 const route = useRoute()
 const router = useRouter()
