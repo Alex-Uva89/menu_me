@@ -76,6 +76,24 @@ const bootReady = computed(() => {
   return hasBiz && hasSub && prodsDone
 })
 
+/* ===== HELPER: trasparenza bg ===== */
+
+function hexToRgba(hex, alpha = 0.8) {
+  let r = 0, g = 0, b = 0
+
+  if (hex.length === 4) {
+    r = parseInt(hex[1] + hex[1], 16)
+    g = parseInt(hex[2] + hex[2], 16)
+    b = parseInt(hex[3] + hex[3], 16)
+  } else if (hex.length === 7) {
+    r = parseInt(hex[1] + hex[2], 16)
+    g = parseInt(hex[3] + hex[4], 16)
+    b = parseInt(hex[5] + hex[6], 16)
+  }
+
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`
+}
+
 watch(bootReady, (ready) => {
   if (ready && showSplash.value) {
     clearTimeout(hideTimer)
@@ -128,7 +146,7 @@ watch(() => route.params.businessName, async () => {
       <div
         ref="headerEl"
         class="menu-header row items-center justify-between q-px-md q-pt-lg"
-        :style="{ backgroundColor: brandHex, color: headerTextColor }"
+        :style="{ backgroundColor: hexToRgba(brandHex, 0.8), color: headerTextColor }"
       >
         <div class="col-auto q-mb-md">
           <ViewToggleFab v-model:view="view" />

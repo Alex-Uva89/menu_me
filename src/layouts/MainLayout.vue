@@ -1,7 +1,7 @@
 <!-- src/layouts/MainLayout.vue -->
 <template>
   <q-layout view="lHh Lpr lFf">
-    <q-header elevated :style="headerStyle" class="text-white">
+    <q-header elevated :style="headerStyle" class="text-white flex align-center" style="height: 80px;">
       <q-toolbar class="row justify-between">
         <q-btn
           v-if="canGoBack"
