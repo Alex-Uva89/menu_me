@@ -179,7 +179,7 @@ watch(() => route.params.businessName, async () => {
 <style scoped>
 .menu-header {
   position: sticky;
-  top: 50px;
+  top: 80px;
   z-index: 10;
   border-bottom: 1px solid rgba(0,0,0,0.06);
   backdrop-filter: blur(6px);
