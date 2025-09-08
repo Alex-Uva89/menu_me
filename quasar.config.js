@@ -160,7 +160,7 @@ export default defineConfig((ctx) => {
       manifest: {
         name: 'Menu Mamma Elvira',
         short_name: 'Menù',
-        description: 'Descrizione',
+        description: 'Menu di Mamma elvira',
         display: 'standalone',
         start_url: '/',
         scope: '/',
