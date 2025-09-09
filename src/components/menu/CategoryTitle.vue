@@ -1,7 +1,7 @@
 <!-- src/components/menu/CategoryTitle.vue -->
 <template>
-  <div class="column items-center" style="width: 200px; margin: auto;">
-    <div class="text-subtitle1 text-weight-bold">
+  <div class="column items-center">
+    <div class="text-subtitle1 text-weight-bold" style="letter-spacing: -0.05rem; width: 150px; line-height: 1.2" >
       {{ resolvedTitle }}
     </div>
   </div>
