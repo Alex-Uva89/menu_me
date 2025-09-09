@@ -1,6 +1,6 @@
 <!-- src/components/menu/CategoryTitle.vue -->
 <template>
-  <div class="column items-center">
+  <div class="column items-center" style="width: 200px; margin: auto;">
     <div class="text-subtitle1 text-weight-bold">
       {{ resolvedTitle }}
     </div>
