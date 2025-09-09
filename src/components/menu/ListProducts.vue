@@ -253,12 +253,12 @@ function goToProduct(p) {
 /* ===== LISTA ===== */
 .product-wrap{ display: block; }
 .price-header{
-  display: flex; align-items: center; gap: 28px;
+  display: flex; align-items: center; gap: 35px;
   padding: 4px 0 8px; color: rgba(0,0,0,0.55);
 }
 .price-header .header-name{ flex: 1; }
-.price-header .header-col.ico{ display: flex; justify-content: flex-end; }
-.price-header .header-col.ico:first-of-type{ width: 82px; }  /* calice */
+.price-header .header-col.ico{ display: flex; justify-content: flex-start; }
+.price-header .header-col.ico:first-of-type{ width: 70px; }  /* calice */
 .price-header .header-col.ico:last-of-type{  width: 30px; }  /* bottiglia */
 
 .product-list{ list-style: none; margin: 0; padding: 0; }

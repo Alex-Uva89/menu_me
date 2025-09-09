@@ -54,11 +54,6 @@
             role="status"
             aria-live="polite"
           >
-            <div class="row items-center q-mb-xs">
-              <q-badge :color="isOpenComputed(current) ? 'positive' : 'negative'" outline>
-                {{ statusLabel(current) }}
-              </q-badge>
-            </div>
 
             <div v-if="todayDayText" class="row items-center q-mb-xs">
               <q-icon name="light_mode" size="16px" class="q-mr-xs" />
