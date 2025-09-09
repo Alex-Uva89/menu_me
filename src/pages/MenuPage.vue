@@ -152,7 +152,7 @@ watch(() => route.params.businessName, async () => {
           <ViewToggleFab v-model:view="view" />
         </div>
 
-        <div class="col text-center" style="align-self: baseline;">
+        <div class="col text-center" style="align-self: center; height: 40px;">
           <CategoryTitle />
         </div>
 
