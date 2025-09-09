@@ -1,7 +1,7 @@
 <!-- src/components/menu/CategoryTitle.vue -->
 <template>
   <div class="column items-center">
-    <div class="text-subtitle1 text-weight-bold ellipsis">
+    <div class="text-subtitle1 text-weight-bold">
       {{ resolvedTitle }}
     </div>
   </div>
