@@ -145,18 +145,18 @@ watch(() => route.params.businessName, async () => {
     <div v-show="!showSplash">
       <div
         ref="headerEl"
-        class="menu-header row items-center justify-between q-pa-md q-pt-lg"
+        class="menu-header row items-center justify-between q-pa-md"
         :style="{ backgroundColor: hexToRgba(brandHex, 0.8), color: headerTextColor }"
       >
-        <div class="col-auto q-mb-md">
+        <div class="col-auto">
           <ViewToggleFab v-model:view="view" />
         </div>
 
-        <div class="col text-center" style="align-self: center; height: 40px;">
+        <div class="col text-center" style="align-self: center;">
           <CategoryTitle />
         </div>
 
-        <div class="col-auto q-mb-md">
+        <div class="col-auto">
           <AllergenButton
             :selected="allergenSelected"
             :options="allergenOptions"
