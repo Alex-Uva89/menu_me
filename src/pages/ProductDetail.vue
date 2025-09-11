@@ -122,13 +122,12 @@
           <div v-if="groupedAttrs.allergen.length" class="attr-block">
             <div class="block-title">{{ L('allergens', 'Allergeni') }}</div>
             <div class="chips">
-              <q-chip v-for="a in groupedAttrs.allergen" :key="a._id" dense outline color="amber-9" text-color="black">
-                <q-avatar v-if="a.iconUrl" square size="18px" class="q-mr-xs">
+              <div v-for="a in groupedAttrs.allergen" :key="a._id">
+                <q-avatar v-if="a.iconUrl" square size="38px" class="q-mr-xs">
                   <img :src="a.iconUrl" :alt="pickAttrName(a)" />
                 </q-avatar>
                 <q-icon v-else-if="a.icon" :name="a.icon" class="q-mr-xs" />
-                {{ pickAttrName(a) }}
-              </q-chip>
+              </div>
             </div>
           </div>
 
