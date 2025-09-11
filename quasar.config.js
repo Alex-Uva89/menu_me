@@ -12,7 +12,7 @@ export default defineConfig((ctx) => {
     // app boot file (/src/boot)
     // --> boot files are part of "main.js"
     // https://v2.quasar.dev/quasar-cli-vite/boot-files
-    boot: ['i18n', 'axios', 'route-history'],
+    boot: ['i18n', 'axios', 'route-history','pwa-refresh'],
 
     // https://v2.quasar.dev/quasar-cli-vite/quasar-config-file#css
     css: ['app.scss'],
@@ -157,6 +157,11 @@ export default defineConfig((ctx) => {
     pwa: {
       workboxMode: 'GenerateSW',     // va benissimo anche InjectManifest se personalizzi
       swFilename: 'service-worker.js',
+      workboxOptions: {
+        skipWaiting: true,     // attiva subito il nuovo SW
+        clientsClaim: true,    // prendi controllo immediato delle pagine
+        cleanupOutdatedCaches: true
+      },
       manifest: {
         name: 'Menu Mamma Elvira',
         short_name: 'Menù',
