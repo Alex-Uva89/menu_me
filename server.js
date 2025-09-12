@@ -1,4 +1,4 @@
-// server.js (ESM)
+// server.js (ESM, Express 5)
 import express from 'express';
 import compression from 'compression';
 import { createProxyMiddleware } from 'http-proxy-middleware';
@@ -11,17 +11,17 @@ const __dirname = dirname(__filename);
 const app = express();
 const dist = join(__dirname, 'dist', 'pwa');
 
-// GZIP
+// --- gzip ---
 app.use(compression());
 
-// === PROXY API (se la tua SPA chiama /api/*) ===
-// Cambia target se necessario
+// --- PROXY API ---
+// /api -> backend
 app.use('/api', createProxyMiddleware({
   target: 'https://backend-rough-snow-2736.fly.dev',
-  changeOrigin: true
+  changeOrigin: true,
 }));
 
-// (Se usi /public/* come su Netlify, tieni anche questo)
+// /public -> backend (come su Netlify)
 app.use('/public', createProxyMiddleware({
   target: 'https://backend-rough-snow-2736.fly.dev',
   changeOrigin: true,
@@ -29,7 +29,7 @@ app.use('/public', createProxyMiddleware({
   onProxyRes(proxyRes) { proxyRes.headers['Cache-Control'] = 'no-store'; }
 }));
 
-// NO-CACHE per HTML e SW
+// --- Headers specifici per SW/manifest ---
 app.get('/service-worker.js', (req, res, next) => {
   res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
   next();
@@ -39,23 +39,29 @@ app.get(['/manifest.json', '/manifest.webmanifest'], (req, res, next) => {
   next();
 });
 
-// Statici fingerprinted: cache lunga
+// --- Statici fingerprinted: cache lunga ---
 app.use('/assets', express.static(join(dist, 'assets'), { immutable: true, maxAge: '1y' }));
 app.use('/icons',  express.static(join(dist, 'icons'),  { immutable: true, maxAge: '1y' }));
-// Il tuo PWA chiede anche /img/icons/* → mappa a /icons/*
+// Il PWA potrebbe richiedere /img/icons/*: mappalo a /icons/*
 app.use('/img/icons', express.static(join(dist, 'icons'), { immutable: true, maxAge: '1y' }));
 
-// Altri statici, no-cache sugli HTML
+// --- Statici generali; no-cache sugli HTML ---
 app.use(express.static(dist, {
   setHeaders: (res, path) => {
-    if (path.endsWith('.html')) res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    if (path.endsWith('.html')) {
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    }
   }
 }));
 
-// SPA fallback
-app.get('/*', (req, res) => {
+// --- SPA fallback (Express 5: niente '*' o '/*') ---
+// Variante che esclude /api e /public dal fallback
+app.get('/:path((?!api|public).*)', (req, res) => {
   res.sendFile(join(dist, 'index.html'));
 });
+
+// (opzionale) healthcheck
+app.get('/healthz', (req, res) => res.status(200).send('ok'));
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`✅ Server listening on :${PORT}`));
