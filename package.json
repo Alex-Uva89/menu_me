@@ -14,7 +14,8 @@
     "build": "quasar build",
     "build:pwa": "quasar build -m pwa",
     "postinstall": "quasar prepare",
-    "heroku-postbuild": "npm run build:pwa"
+    "heroku-postbuild": "npm run build:pwa",
+    "start": "node server.js"
   },
   "dependencies": {
     "axios": "^1.2.1",
