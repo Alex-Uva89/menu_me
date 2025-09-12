@@ -53,7 +53,7 @@ app.use(express.static(dist, {
 }));
 
 // SPA fallback
-app.get('*', (req, res) => {
+app.get('/*', (req, res) => {
   res.sendFile(join(dist, 'index.html'));
 });
 
