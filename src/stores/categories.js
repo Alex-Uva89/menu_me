@@ -14,15 +14,27 @@ export const useCategoriesStore = defineStore('categories', () => {
   // selezione globale (sottocategoria)
   const categorySelected = ref(null)
 
-  async function fetchCategoriesForBusiness(businessId) {
+  async function fetchCategoriesForBusiness(
+    businessId,
+    { preserveSelection = true, preferredCategoryId = null } = {}
+  ) {
     loading.value = true
     error.value = null
+
+    const prevSelectedId = preserveSelection ? (categorySelected.value?._id || null) : null
+
     try {
       const { data } = await api.get(`/public/categories/${businessId}`)
       roots.value = Array.isArray(data?.roots) ? data.roots : []
       all.value   = Array.isArray(data?.all)   ? data.all   : []
-      currentParent.value  = null
-      categorySelected.value = null
+
+      if (!preserveSelection) {
+        currentParent.value = null
+        categorySelected.value = null
+      }
+
+      // Mantieni/forza selezione se valida, altrimenti fallback alla prima
+      ensureSelectedForBusiness(preferredCategoryId || prevSelectedId)
     } catch (e) {
       error.value = e?.message || 'Errore nel caricamento categorie'
       roots.value = []
@@ -84,6 +96,44 @@ export const useCategoriesStore = defineStore('categories', () => {
     return false
   }
 
+  // ===== NEW: helpers di selezione =====
+  function ensureSelectedForBusiness(preferredId = null) {
+    const list = Array.isArray(all.value) ? all.value : []
+    const rootsList = Array.isArray(roots.value) ? roots.value : []
+    const exists = (id) => !!id && list.some(c => c?._id === id)
+
+    const desiredId = preferredId || categorySelected.value?._id
+
+    if (exists(desiredId)) {
+      const sel = list.find(c => c._id === desiredId)
+      categorySelected.value = sel
+
+      // Trova la root “padre” della sottocategoria
+      const parentId = (sel?.parents || [])
+        .map(p => p?._id)
+        .find(pid => rootsList.some(r => r?._id === pid))
+
+      currentParent.value = rootsList.find(r => r._id === parentId) || null
+      return true
+    }
+
+    // Se non esiste più, fallback alla prima sottocategoria disponibile
+    return autoSelectFirstSubcategory()
+  }
+
+  function setCategoryById(id) {
+    if (!id) return false
+    const list = Array.isArray(all.value) ? all.value : []
+    const cat = list.find(c => c?._id === id)
+    if (!cat) return false
+
+    categorySelected.value = cat
+    const root = roots.value.find(r => (cat.parents || []).some(p => p?._id === r._id)) || null
+    currentParent.value = root
+    return true
+  }
+  // ===== /NEW =====
+
   return {
     // state
     roots, all, loading, error,
@@ -93,7 +143,8 @@ export const useCategoriesStore = defineStore('categories', () => {
     // actions
     fetchCategoriesForBusiness, getChildrenOf,
     openRoot, selectCategory, backToRoots,
-    autoSelectFirstSubcategory,
-    openRootAndSelectFirst
+    autoSelectFirstSubcategory, openRootAndSelectFirst,
+    // NEW
+    ensureSelectedForBusiness, setCategoryById
   }
 })

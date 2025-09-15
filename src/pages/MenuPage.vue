@@ -1,3 +1,4 @@
+<!-- src/pages/MenuPage.vue -->
 <script setup>
 import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue'
 import { useRoute } from 'vue-router'
@@ -77,7 +78,6 @@ const bootReady = computed(() => {
 })
 
 /* ===== HELPER: trasparenza bg ===== */
-
 function hexToRgba(hex, alpha = 0.8) {
   let r = 0, g = 0, b = 0
 
@@ -109,15 +109,17 @@ onMounted(async () => {
   await business.fetchByName(decodedName.value)
 
   if (business.current?._id) {
-    await categories.fetchCategoriesForBusiness(business.current._id)
-    categories.autoSelectFirstSubcategory()
+    await categories.fetchCategoriesForBusiness(
+      business.current._id,
+      { preserveSelection: true }
+      // Se vuoi supportare deep-link: aggiungi preferredCategoryId: route.query?.cat || null
+    )
   }
 
   if (bootReady.value && showSplash.value) {
     hideTimer = setTimeout(() => { hide() }, 1000)
   }
 })
-
 
 /* ===== Cambio businessName ===== */
 watch(() => route.params.businessName, async () => {
@@ -127,8 +129,11 @@ watch(() => route.params.businessName, async () => {
   await business.fetchByName(decodedName.value)
 
   if (business.current?._id) {
-    await categories.fetchCategoriesForBusiness(business.current._id)
-    categories.autoSelectFirstSubcategory()
+    await categories.fetchCategoriesForBusiness(
+      business.current._id,
+      { preserveSelection: true }
+      // preferredCategoryId: route.query?.cat || null
+    )
   }
 
   if (bootReady.value && showSplash.value) {
