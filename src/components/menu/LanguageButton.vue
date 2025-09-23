@@ -6,6 +6,7 @@
       round
       :label="currentLabel"
       aria-label="Cambia lingua"
+      :aria-pressed="dialog ? 'true' : 'false'"
       @click="dialog = true"
     />
 
@@ -53,7 +54,10 @@ const props = defineProps({
     type: Array,
     default: () => ([
       { code: 'it', label: 'Italiano' },
-      { code: 'en', label: 'English' }
+      { code: 'en', label: 'English'  },
+      { code: 'fr', label: 'Français' },
+      { code: 'es', label: 'Español'  },
+      { code: 'pt', label: 'Português' }
     ]),
     validator: (arr) =>
       Array.isArray(arr) &&
@@ -81,9 +85,11 @@ const currentLang = computed(() => {
   return codes[0] || 'it'
 })
 
-// *** SOLO IT / EN sul bottone ***
+// Etichetta del bottone: usa label se presente, altrimenti codice maiuscolo
 const currentLabel = computed(() => {
-  return String(currentLang.value || '').toUpperCase()
+  const cur = currentLang.value
+  const opt = safeOptions.value.find(o => o.code === cur)
+  return (opt?.code || String(cur || '').toUpperCase())
 })
 
 // Seleziona lingua solo se presente
