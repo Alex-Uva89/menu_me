@@ -328,8 +328,8 @@ function goToProduct(p) {
 /* Header per etichette testuali (special) */
 .price-header .header-col.lbl{
   display: flex; justify-content: flex-start; align-items: center;
-  font-size: .82rem; text-transform: uppercase; letter-spacing: .5px;
-  white-space: nowrap;
+  font-size: 1rem; text-transform: uppercase;
+  white-space: nowrap; font-weight: bold;
 }
 
 .product-list{ list-style: none; margin: 0; padding: 0; }
