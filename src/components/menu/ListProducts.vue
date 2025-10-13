@@ -42,7 +42,7 @@ watch(
   { immediate: true }
 )
 
-/* --- helpers i18n & prezzi --- */
+/* --- helpers i18n & testi --- */
 function productName(p) {
   const loc = locale.value
   return (
@@ -63,18 +63,45 @@ function productSubtitle(p) {
   const s = String(raw || '').trim()
   return s.length > 160 ? s.slice(0, 157) + '…' : s
 }
+
+/* --- prezzi --- */
 function priceInt(n) {
   if (n == null || isNaN(n)) return null
   return String(n).split('.')[0]
 }
 function priceShape(p) {
-  const glass  = p?.priceGlass  > 0 ? priceInt(p.priceGlass)  : null
-  const bottle = p?.priceBottle > 0 ? priceInt(p.priceBottle) : null
-  const base   = p?.price       > 0 ? priceInt(p.price)       : null
-  return { glass, bottle, base }
+  const glass  = p?.priceGlass     > 0 ? priceInt(p.priceGlass)     : null
+  const bottle = p?.priceBottle    > 0 ? priceInt(p.priceBottle)    : null
+  const base   = p?.price          > 0 ? priceInt(p.price)          : null
+  const s1     = p?.priceSpecial1  > 0 ? priceInt(p.priceSpecial1)  : null
+  const s2     = p?.priceSpecial2  > 0 ? priceInt(p.priceSpecial2)  : null
+  return { glass, bottle, base, s1, s2 }
 }
+
+/** Modalità prezzi a livello di lista:
+ * - 'special' se esiste almeno un prodotto con special1/2
+ * - 'gb' se esiste almeno un prodotto con glass/bottle
+ * - 'single' altrimenti
+ */
+const priceMode = computed(() => {
+  const list = filtered.value || []
+  const hasSpecial = list.some(p => (p?.priceSpecial1 > 0) || (p?.priceSpecial2 > 0))
+  const hasGB      = list.some(p => (p?.priceGlass > 0) || (p?.priceBottle > 0))
+  if (hasSpecial) return 'special'
+  if (hasGB) return 'gb'
+  return 'single'
+})
+
+/** header visibile solo in modalità coppia */
+const showPriceHeader = computed(() => priceMode.value !== 'single')
+
+/** prezzo principale per le cards: segue la modalità corrente */
 function mainPrice(p) {
   const s = priceShape(p)
+  if (priceMode.value === 'special') {
+    return s.s2 ?? s.s1 ?? s.base ?? s.bottle ?? s.glass
+  }
+  // modalità bottle/glass o single come fallback storico
   return s.bottle ?? s.base ?? s.glass
 }
 
@@ -94,11 +121,6 @@ const filtered = computed(() => {
     return !ids.some(id => sel.has(id))
   })
 })
-
-/** se almeno un prodotto ha glass/bottle, mostro l'header con icone (solo vista lista) */
-const showPriceHeader = computed(() =>
-  filtered.value.some(p => (p?.priceGlass > 0) || (p?.priceBottle > 0))
-)
 
 /* --- navigazione --- */
 function goToProduct(p) {
@@ -141,15 +163,29 @@ function goToProduct(p) {
       </div>
 
       <!-- ===== Vista LISTA ===== -->
-      <div v-else-if="currentView === 'list'" class="product-wrap q-px-md">
+      <div
+        v-else-if="currentView === 'list'"
+        class="product-wrap q-px-md"
+        :class="{ 'mode-special': priceMode === 'special' }"
+      >
         <div v-if="showPriceHeader" class="price-header">
           <div class="header-name"></div>
-          <div class="header-col ico">
-            <q-icon :name="glassIcon" size="18px" />
-          </div>
-          <div class="header-col ico">
-            <q-icon :name="bottleIcon" size="18px" />
-          </div>
+
+          <!-- Header per SPECIAL: croccante / contemporanea -->
+          <template v-if="priceMode === 'special'">
+            <div class="header-col lbl">croc</div>
+            <div class="header-col lbl">cont</div>
+          </template>
+
+          <!-- Header per GLASS/BOTTLE: icone -->
+          <template v-else>
+            <div class="header-col ico">
+              <q-icon :name="glassIcon" size="18px" />
+            </div>
+            <div class="header-col ico">
+              <q-icon :name="bottleIcon" size="18px" />
+            </div>
+          </template>
         </div>
 
         <ul class="product-list" role="list">
@@ -169,20 +205,46 @@ function goToProduct(p) {
               <div v-if="productSubtitle(p)" class="subtitle">{{ productSubtitle(p) }}</div>
             </div>
 
-            <div class="price-col">
-              <span v-if="priceShape(p).glass !== null" class="price-num">
-                {{ priceShape(p).glass }}
-              </span>
-            </div>
+            <!-- COLONNE PREZZI -->
+            <!-- Modalità SPECIAL: s1 | s2 (fallback a base nella seconda se non c'è la coppia) -->
+            <template v-if="priceMode === 'special'">
+              <div class="price-col">
+                <span v-if="priceShape(p).s1 !== null" class="price-num">
+                  {{ priceShape(p).s1 }}
+                </span>
+              </div>
+              <div class="price-col">
+                <span v-if="priceShape(p).s2 !== null" class="price-num">
+                  {{ priceShape(p).s2 }}
+                </span>
+                <span
+                  v-else-if="priceShape(p).s1 === null && priceShape(p).base !== null"
+                  class="price-num"
+                >
+                  {{ priceShape(p).base }}
+                </span>
+              </div>
+            </template>
 
-            <div class="price-col">
-              <span v-if="priceShape(p).bottle !== null" class="price-num">
-                {{ priceShape(p).bottle }}
-              </span>
-              <span v-else-if="priceShape(p).glass === null && priceShape(p).base !== null" class="price-num">
-                {{ priceShape(p).base }}
-              </span>
-            </div>
+            <!-- Modalità GLASS/BOTTLE: glass | bottle (fallback a base nella seconda) -->
+            <template v-else>
+              <div class="price-col">
+                <span v-if="priceShape(p).glass !== null" class="price-num">
+                  {{ priceShape(p).glass }}
+                </span>
+              </div>
+              <div class="price-col">
+                <span v-if="priceShape(p).bottle !== null" class="price-num">
+                  {{ priceShape(p).bottle }}
+                </span>
+                <span
+                  v-else-if="priceShape(p).glass === null && priceShape(p).base !== null"
+                  class="price-num"
+                >
+                  {{ priceShape(p).base }}
+                </span>
+              </div>
+            </template>
           </li>
         </ul>
       </div>
@@ -257,9 +319,18 @@ function goToProduct(p) {
   padding: 4px 0 8px; color: rgba(0,0,0,0.55);
 }
 .price-header .header-name{ flex: 1; }
+
+/* Header per icone (glass/bottle) */
 .price-header .header-col.ico{ display: flex; justify-content: flex-start; }
 .price-header .header-col.ico:first-of-type{ width: 70px; }  /* calice */
 .price-header .header-col.ico:last-of-type{  width: 30px; }  /* bottiglia */
+
+/* Header per etichette testuali (special) */
+.price-header .header-col.lbl{
+  display: flex; justify-content: flex-start; align-items: center;
+  font-size: .82rem; text-transform: uppercase; letter-spacing: .5px;
+  white-space: nowrap;
+}
 
 .product-list{ list-style: none; margin: 0; padding: 0; }
 .product-row{
@@ -279,6 +350,7 @@ function goToProduct(p) {
   display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
 }
 
+/* larghezze colonne prezzo in riga (default: glass/bottle) */
 .price-col{ display: flex; justify-content: flex-end; align-items: center; }
 .product-row .price-col:first-of-type{ width: 82px; }
 .product-row .price-col:last-of-type{  width: 30px; }
